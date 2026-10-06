@@ -6,4 +6,4 @@
 - Seed de 16 equipos y calendario global.
 - Portal docente Vite con Google OAuth, cumplimiento, administración y CSV.
 - OpenAPI, JSON Schema, ejemplos y guías operativas.
-- Workflow de GitHub Pages preparado, sin despliegue realizado.
+- Primer despliegue público mediante GitHub Pages.
