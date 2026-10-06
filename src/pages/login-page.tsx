@@ -1,8 +1,9 @@
-import { BookOpen, CheckCircle2, LockKeyhole } from "lucide-react";
+import { BookOpen, LockKeyhole } from "lucide-react";
 import { Navigate, Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { useAuth } from "../contexts/auth-context";
+import logo from "../assets/logo.svg";
 import { publicConfig } from "../lib/env";
 
 export function LoginPage() {
@@ -13,7 +14,7 @@ export function LoginPage() {
     <main className="grid min-h-screen place-items-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center gap-3">
-          <div className="grid size-10 place-items-center rounded-lg bg-primary text-white"><CheckCircle2 className="size-5" /></div>
+          <img src={logo} alt="" className="size-12" />
           <div><p className="font-semibold">Lab4 KPIs</p><p className="text-sm text-muted-foreground">Seguimiento diario</p></div>
         </div>
         <Card>
