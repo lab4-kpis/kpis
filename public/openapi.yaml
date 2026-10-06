@@ -29,13 +29,12 @@ paths:
           schema: { type: string, default: id.asc }
       responses:
         '200':
-          description: Catálogo visible para la clave del equipo
+          description: Catálogo visible para la clave del equipo; vacío si la clave falta o no es válida
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: '#/components/schemas/KpiCatalogRead' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
     post:
       tags: [Catalog]
       summary: Registrar uno o más KPIs
@@ -69,7 +68,7 @@ paths:
       responses:
         '201': { description: KPI creado }
         '400': { $ref: '#/components/responses/BadRequest' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/InvalidKey' }
         '409': { $ref: '#/components/responses/Conflict' }
     patch:
       tags: [Catalog]
@@ -93,7 +92,8 @@ paths:
       responses:
         '204': { description: KPI actualizado }
         '400': { $ref: '#/components/responses/BadRequest' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+        '401': { $ref: '#/components/responses/NotAllowed' }
+        '403': { $ref: '#/components/responses/InvalidKey' }
   /rest/v1/measurement:
     post:
       tags: [Measurements]
@@ -138,8 +138,8 @@ paths:
       responses:
         '201': { description: Lote aceptado; los conflictos existentes fueron ignorados }
         '400': { $ref: '#/components/responses/BadRequest' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { description: La clave no pertenece al ambiente enviado }
+        '401': { description: La clave no pertenece al ambiente enviado }
+        '403': { $ref: '#/components/responses/InvalidKey' }
         '409': { $ref: '#/components/responses/Conflict' }
 components:
   securitySchemes:
@@ -169,8 +169,13 @@ components:
       content:
         application/json:
           schema: { $ref: '#/components/schemas/PostgrestError' }
-    Unauthorized:
-      description: Falta una clave o fue revocada
+    NotAllowed:
+      description: La clave es válida pero la operación no está permitida, por ejemplo un campo no editable
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/PostgrestError' }
+    InvalidKey:
+      description: Falta la clave del equipo, es inválida, fue revocada o el proyecto está inactivo
       content:
         application/json:
           schema: { $ref: '#/components/schemas/PostgrestError' }
