@@ -9,7 +9,7 @@ max_rows = 1000
 [auth]
 enabled = true
 site_url = "http://localhost:5173"
-additional_redirect_urls = ["http://localhost:5173", "https://lab4-kpis.github.io/kpis/", "https://lab4-kpis.github.io/kpis/dev/"]
+additional_redirect_urls = ["http://localhost:5173"]
 enable_signup = true
 
 [auth.hook.before_user_created]
@@ -19,3 +19,23 @@ uri = "pg-functions://postgres/public/hook_restrict_admin_signup"
 [db.seed]
 enabled = true
 sql_paths = ["./seed.sql"]
+
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+
+# Overrides aplicados por `supabase config push --project-ref <ref>`.
+[remotes.development]
+project_id = "gapkrqfdshqbowdtldzc"
+
+[remotes.development.auth]
+site_url = "https://lab4-kpis.github.io/kpis/dev/"
+additional_redirect_urls = ["http://localhost:5173", "https://lab4-kpis.github.io/kpis/dev/"]
+
+[remotes.production]
+project_id = "rzlalzowistpiphmdqpp"
+
+[remotes.production.auth]
+site_url = "https://lab4-kpis.github.io/kpis/"
+additional_redirect_urls = ["http://localhost:5173", "https://lab4-kpis.github.io/kpis/"]
