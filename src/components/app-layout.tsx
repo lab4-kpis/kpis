@@ -1,6 +1,7 @@
 import { BarChart3, BookOpen, LogOut, Menu, Settings, Users, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import logo from "../assets/logo.svg";
 import { useAuth } from "../contexts/auth-context";
 import { rememberLastVisitedRoute } from "../lib/last-visited-route";
 import { cn } from "../lib/utils";
@@ -24,7 +25,8 @@ export function AppLayout() {
 
   const sidebar = (
     <>
-      <div className="flex h-16 items-center border-b px-5">
+      <div className="flex h-16 items-center gap-3 border-b px-5">
+        <img src={logo} alt="" className="size-9" />
         <div>
           <p className="text-sm font-semibold tracking-tight">Lab4 KPIs</p>
           <p className="text-xs text-muted-foreground">Portal docente</p>

@@ -1,8 +1,13 @@
 name: Deploy portal to GitHub Pages
 
+# Un solo sitio de Pages sirve ambos entornos:
+#   main -> https://lab4-kpis.github.io/kpis/      (Supabase producción)
+#   dev  -> https://lab4-kpis.github.io/kpis/dev/  (Supabase desarrollo)
+# Cada push reconstruye las dos ramas porque Pages reemplaza el sitio completo.
+
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   workflow_dispatch:
 
 permissions:
@@ -15,9 +20,25 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: production
+            ref: main
+            base: /kpis/
+            supabase_url: https://rzlalzowistpiphmdqpp.supabase.co
+            publishable_key: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          - name: development
+            ref: dev
+            base: /kpis/dev/
+            supabase_url: ${{ vars.DEV_VITE_SUPABASE_URL }}
+            publishable_key: ${{ vars.DEV_VITE_SUPABASE_PUBLISHABLE_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          ref: ${{ matrix.ref }}
       - name: Set up Node
         uses: actions/setup-node@v6
         with:
@@ -30,25 +51,44 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_SUPABASE_URL: https://rzlalzowistpiphmdqpp.supabase.co
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+          VITE_BASE_PATH: ${{ matrix.base }}
+          VITE_SUPABASE_URL: ${{ matrix.supabase_url }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ matrix.publishable_key }}
+      - name: Upload build
+        uses: actions/upload-artifact@v4
         with:
+          name: build-${{ matrix.name }}
           path: dist
 
   deploy:
+    needs: build
+    # Producción se publica aunque falle el build de desarrollo.
+    if: ${{ !cancelled() }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: build
     permissions:
       pages: write
       id-token: write
     steps:
+      - name: Download production build
+        uses: actions/download-artifact@v5
+        with:
+          name: build-production
+          path: site
+      - name: Download development build
+        continue-on-error: true
+        uses: actions/download-artifact@v5
+        with:
+          name: build-development
+          path: site/dev
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
