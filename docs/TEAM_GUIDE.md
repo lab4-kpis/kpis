@@ -58,7 +58,8 @@ Sólo `prod` suma para cumplimiento. `dev` y `qa` permiten validar la integraci�
 ## 4. Errores esperables
 
 - `400`: JSON, tipo, unidad, fecha futura o límite inválido.
-- `401/403`: clave ausente, revocada, de otro equipo o de otro ambiente.
+- `401`: la clave es válida pero no corresponde al ambiente enviado, o el campo no es editable.
+- `403`: clave ausente, inválida, revocada o de un proyecto inactivo.
 - `409`: KPI inexistente/ajeno o conflicto de integridad.
 
 La especificación completa y ejecutable está en `#/docs`.

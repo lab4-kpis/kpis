@@ -32,6 +32,24 @@ npm run db:types
 
 `db:push` usa Supabase CLI y las migraciones versionadas. El bootstrap toma `BOOTSTRAP_ADMIN_EMAIL` de `.env.local`; no hay correos personales en el código. `db:types` regenera `src/types/database.ts` desde el esquema remoto una vez aplicada la migración.
 
+## Entornos
+
+| Entorno | Rama | Portal | Supabase |
+|---|---|---|---|
+| Producción | `main` | https://lab4-kpis.github.io/kpis/ | `rzlalzowistpiphmdqpp` |
+| Desarrollo | `dev` | https://lab4-kpis.github.io/kpis/dev/ | proyecto `lab4-kpis-dev` |
+
+Cada push a `main` o `dev` reconstruye y publica ambos portales. El build de desarrollo toma `DEV_VITE_SUPABASE_URL` y `DEV_VITE_SUPABASE_PUBLISHABLE_KEY` de las variables del repositorio; si falla, producción se publica igual.
+
+Las credenciales de desarrollo van en `.env.development` (ignorado por git) con `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `DATABASE_URL` y `BOOTSTRAP_ADMIN_EMAIL`. Vite lo carga en `npm run dev`, así que el desarrollo local usa la base de desarrollo. Para la base:
+
+```bash
+npm run db:push:dev
+npm run db:bootstrap-admin:dev
+```
+
+Las migraciones se prueban primero en desarrollo y se aplican a producción con `npm run db:push` después del merge a `main`. Nunca copiar datos ni claves de equipos de producción a desarrollo.
+
 ## Verificación
 
 ```bash
