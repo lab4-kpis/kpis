@@ -9,7 +9,7 @@ max_rows = 1000
 [auth]
 enabled = true
 site_url = "http://localhost:5173"
-additional_redirect_urls = ["http://localhost:5173", "https://lab4-kpis.github.io/kpis/"]
+additional_redirect_urls = ["http://localhost:5173", "https://lab4-kpis.github.io/kpis/", "https://lab4-kpis.github.io/kpis/dev/"]
 enable_signup = true
 
 [auth.hook.before_user_created]

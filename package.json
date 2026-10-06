@@ -11,8 +11,10 @@
     "preview": "vite preview",
     "db:push": "node scripts/supabase-cli.mjs db push",
     "db:push:dry": "node scripts/supabase-cli.mjs db push --dry-run",
+    "db:push:dev": "node --env-file=.env.development scripts/supabase-cli.mjs db push",
     "db:types": "node scripts/supabase-cli.mjs gen types typescript --db-url",
-    "db:bootstrap-admin": "node scripts/bootstrap-admin.mjs"
+    "db:bootstrap-admin": "node scripts/bootstrap-admin.mjs",
+    "db:bootstrap-admin:dev": "node --env-file=.env.development scripts/bootstrap-admin.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.6",
