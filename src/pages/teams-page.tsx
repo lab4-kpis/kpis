@@ -1,11 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Search } from "lucide-react";
+import { ChevronRight, Plus, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { PageHeader } from "../components/page-header";
-import { TableHead, TableShell, Td, Th } from "../components/data-table";
+import { TableBody, TableHead, TableRow, TableShell, Td, Th } from "../components/data-table";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
@@ -38,6 +38,7 @@ async function loadTeams() {
 }
 
 export function TeamsPage() {
+  const navigate = useNavigate();
   const { data, loading, error, reload } = useAsyncData(loadTeams);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -77,15 +78,15 @@ export function TeamsPage() {
       {loading ? <LoadingState /> : error ? <ErrorState message={error} onRetry={() => void reload()} /> : !filtered.length ? <EmptyState title="No encontramos equipos" description="Probá con otro nombre o identificador." /> : (
         <TableShell>
           <TableHead><tr><Th>Equipo</Th><Th>Identificador</Th><Th>KPIs activos</Th><Th>Estado</Th><Th /></tr></TableHead>
-          <tbody>{filtered.map((project) => (
-            <tr key={project.id} className="hover:bg-[#fafbfc]">
-              <Td><span className="font-medium">{project.team_number}. {project.name}</span></Td>
+          <TableBody>{filtered.map((project) => (
+            <TableRow key={project.id} interactive onClick={(event) => { if (!(event.target as HTMLElement).closest("a, button")) navigate(`/teams/${project.id}`); }}>
+              <Td><Link className="font-medium hover:text-primary" to={`/teams/${project.id}`}>{project.team_number}. {project.name}</Link></Td>
               <Td><code className="font-mono text-xs">{project.project_key}</code></Td>
               <Td><span className="font-mono">{project.kpiCount}/10</span></Td>
               <Td><Badge variant={project.active ? "success" : "neutral"}>{project.active ? "Activo" : "Inactivo"}</Badge></Td>
-              <Td className="text-right"><Button asChild variant="ghost" size="sm"><Link to={`/teams/${project.id}`}>Ver detalle</Link></Button></Td>
-            </tr>
-          ))}</tbody>
+              <Td className="w-12 text-right text-muted-foreground"><ChevronRight className="ml-auto size-4" aria-hidden="true" /></Td>
+            </TableRow>
+          ))}</TableBody>
         </TableShell>
       )}
     </>

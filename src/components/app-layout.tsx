@@ -1,7 +1,8 @@
 import { BarChart3, BookOpen, LogOut, Menu, Settings, Users, X } from "lucide-react";
-import { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/auth-context";
+import { rememberLastVisitedRoute } from "../lib/last-visited-route";
 import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
 
@@ -15,6 +16,11 @@ const links = [
 export function AppLayout() {
   const [open, setOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { pathname, search } = useLocation();
+
+  useEffect(() => {
+    rememberLastVisitedRoute(`${pathname}${search}`);
+  }, [pathname, search]);
 
   const sidebar = (
     <>
@@ -40,17 +46,11 @@ export function AppLayout() {
           </NavLink>
         ))}
       </nav>
-      <div className="border-t p-3">
-        <p className="truncate px-3 text-xs text-muted-foreground">{user?.email}</p>
-        <Button variant="ghost" className="mt-1 w-full justify-start" onClick={() => void signOut()}>
-          <LogOut className="size-4" />Cerrar sesión
-        </Button>
-      </div>
     </>
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r bg-card lg:flex">{sidebar}</aside>
       {open ? (
         <div className="fixed inset-0 z-40 lg:hidden">
@@ -62,9 +62,14 @@ export function AppLayout() {
         </div>
       ) : null}
       <div className="lg:pl-60">
-        <header className="sticky top-0 z-30 flex h-14 items-center border-b bg-card/95 px-4 backdrop-blur lg:hidden">
-          <Button variant="ghost" size="icon" onClick={() => setOpen(true)} aria-label="Abrir menú"><Menu className="size-5" /></Button>
-          <span className="ml-3 text-sm font-semibold">Lab4 KPIs</span>
+        <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-card px-4 sm:px-6 lg:px-8">
+          <Button variant="ghost" size="icon" className="mr-3 lg:hidden" onClick={() => setOpen(true)} aria-label="Abrir menú"><Menu className="size-5" /></Button>
+          <div className="ml-auto flex min-w-0 items-center gap-2">
+            <span className="max-w-24 truncate text-xs text-muted-foreground sm:max-w-none sm:text-sm">{user?.email}</span>
+            <Button variant="ghost" size="sm" onClick={() => void signOut()}>
+              <LogOut className="size-4" />Cerrar sesión
+            </Button>
+          </div>
         </header>
         <main className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8"><Outlet /></main>
       </div>

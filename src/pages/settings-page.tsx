@@ -3,7 +3,7 @@ import { CalendarRange, Plus, UserMinus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
-import { TableHead, TableShell, Td, Th } from "../components/data-table";
+import { TableBody, TableHead, TableRow, TableShell, Td, Th } from "../components/data-table";
 import { PageHeader } from "../components/page-header";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -117,7 +117,7 @@ export function SettingsPage() {
         </Card>
       </div>
 
-      <Card className="mt-5"><CardHeader><CardTitle>Actividad reciente</CardTitle><CardDescription>Registro mínimo de cambios administrativos y de catálogo; nunca contiene claves completas.</CardDescription></CardHeader><CardContent>{data.audit.length ? <TableShell><TableHead><tr><Th>Fecha</Th><Th>Actor</Th><Th>Acción</Th><Th>Recurso</Th></tr></TableHead><tbody>{data.audit.map((entry) => <tr key={entry.id}><Td>{formatDateTime(entry.occurred_at)}</Td><Td><Badge>{entry.actor_type}</Badge><p className="mt-1 max-w-48 truncate text-xs text-muted-foreground">{entry.actor_identifier ?? "sistema"}</p></Td><Td>{entry.action}</Td><Td><span className="text-sm">{entry.resource_type}</span><p className="max-w-64 truncate font-mono text-xs text-muted-foreground">{entry.resource_id ?? "—"}</p></Td></tr>)}</tbody></TableShell> : <p className="text-sm text-muted-foreground">Todavía no hay actividad registrada.</p>}</CardContent></Card>
+      <Card className="mt-5"><CardHeader><CardTitle>Actividad reciente</CardTitle><CardDescription>Registro mínimo de cambios administrativos y de catálogo; nunca contiene claves completas.</CardDescription></CardHeader><CardContent>{data.audit.length ? <TableShell><TableHead><tr><Th>Fecha</Th><Th>Actor</Th><Th>Acción</Th><Th>Recurso</Th></tr></TableHead><TableBody>{data.audit.map((entry) => <TableRow key={entry.id}><Td>{formatDateTime(entry.occurred_at)}</Td><Td><Badge>{entry.actor_type}</Badge><p className="mt-1 max-w-48 truncate text-xs text-muted-foreground">{entry.actor_identifier ?? "sistema"}</p></Td><Td>{entry.action}</Td><Td><span className="text-sm">{entry.resource_type}</span><p className="max-w-64 truncate font-mono text-xs text-muted-foreground">{entry.resource_id ?? "-"}</p></Td></TableRow>)}</TableBody></TableShell> : <p className="text-sm text-muted-foreground">Todavía no hay actividad registrada.</p>}</CardContent></Card>
     </>
   );
 }

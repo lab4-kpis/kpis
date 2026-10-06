@@ -6,6 +6,9 @@ import { HashRouter } from "react-router-dom";
 import { App } from "./App";
 import { AuthProvider } from "./contexts/auth-context";
 import "./index.css";
+import { restoreLastVisitedRoute } from "./lib/last-visited-route";
+
+restoreLastVisitedRoute();
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Root element not found");

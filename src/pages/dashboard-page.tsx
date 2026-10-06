@@ -2,7 +2,7 @@ import { AlertTriangle, CalendarDays, CheckCircle2, Download, MinusCircle } from
 import { Link } from "react-router-dom";
 import { ComplianceBadge } from "../components/compliance-badge";
 import { PageHeader } from "../components/page-header";
-import { TableHead, TableShell, Td, Th } from "../components/data-table";
+import { TableBody, TableHead, TableRow, TableShell, Td, Th } from "../components/data-table";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { EmptyState, ErrorState, LoadingState } from "../components/ui/feedback";
@@ -51,16 +51,16 @@ export function DashboardPage() {
           ) : null}
           <TableShell>
             <TableHead><tr><Th>Equipo</Th><Th>Estado</Th><Th>Total</Th><Th>Business</Th><Th>Technical</Th><Th>Health</Th></tr></TableHead>
-            <tbody>
+            <TableBody>
               {rows.map((row) => (
-                <tr key={row.project_id} className="hover:bg-[#fafbfc]">
+                <TableRow key={row.project_id} className="hover:bg-[#fafbfc]">
                   <Td><Link className="font-medium text-primary hover:underline" to={`/teams/${row.project_id}`}>{row.team_number}. {row.project_name}</Link><p className="font-mono text-xs text-muted-foreground">{row.project_key}</p></Td>
                   <Td><ComplianceBadge status={row.status} /></Td>
                   <Td><span className="font-mono font-medium">{row.valid_kpis}/10</span></Td>
                   <Td>{row.business_kpis}</Td><Td>{row.technical_kpis}</Td><Td>{row.health_kpis}</Td>
-                </tr>
+                </TableRow>
               ))}
-            </tbody>
+            </TableBody>
           </TableShell>
         </>
       )}
