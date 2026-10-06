@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+  --color-background: #f7f8fa;
+  --color-foreground: #18212f;
+  --color-card: #ffffff;
+  --color-card-foreground: #18212f;
+  --color-muted: #eef1f5;
+  --color-muted-foreground: #667085;
+  --color-border: #dfe3e8;
+  --color-primary: #174ea6;
+  --color-primary-foreground: #ffffff;
+  --color-success: #16794c;
+  --color-warning: #a15c00;
+  --color-danger: #b42318;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: #c9dcff;
+}
+
+.swagger-ui,
+.swagger-ui .info .title,
+.swagger-ui .opblock-tag,
+.swagger-ui button,
+.swagger-ui input,
+.swagger-ui select,
+.swagger-ui textarea {
+  font-family: var(--font-sans) !important;
+}
+
+.swagger-ui .code,
+.swagger-ui code,
+.swagger-ui pre,
+.swagger-ui .model {
+  font-family: var(--font-mono) !important;
+}
+
+.swagger-ui .topbar,
+.swagger-ui .information-container.wrapper .info > a {
+  display: none;
+}

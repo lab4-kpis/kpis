@@ -1,0 +1,2 @@
+-- Development/demo seed only. Production teams are created by the migration.
+-- Keep administrator emails and API keys out of version control.

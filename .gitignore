@@ -1,0 +1,48 @@
+# Secrets and machine-local configuration
+.env
+.env.*
+!.env.example
+*.local
+*.pem
+*.key
+*.p12
+*.secret
+.npmrc
+credentials.json
+service-account*.json
+*.dump
+*.sql.gz
+*.sqlite
+*.sqlite3
+backups/
+exports/
+
+# Dependencies and generated output
+node_modules/
+dist/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Tool state and caches
+supabase/.temp/
+supabase/.branches/
+.codex/
+.agents/
+.cache/
+.turbo/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+Thumbs.db

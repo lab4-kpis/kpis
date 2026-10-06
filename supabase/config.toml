@@ -1,0 +1,21 @@
+project_id = "lab4-kpis"
+
+[api]
+enabled = true
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173", "https://lab4-kpis.github.io/kpis/"]
+enable_signup = true
+
+[auth.hook.before_user_created]
+enabled = true
+uri = "pg-functions://postgres/public/hook_restrict_admin_signup"
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]

@@ -1,0 +1,237 @@
+openapi: 3.1.0
+info:
+  title: Lab4 KPIs API
+  version: 1.0.0
+  description: |
+    Contrato de reporte diario para los equipos de Lab4. La fuente de verdad es la migración SQL.
+    Todas las solicitudes de equipo requieren la clave pública de Supabase (`apikey`) y la clave
+    privada del equipo y ambiente (`X-Project-Key`). Las fechas del contrato usan `YYYY-MM-DD`.
+servers:
+  - url: https://rzlalzowistpiphmdqpp.supabase.co
+    description: Supabase central
+tags:
+  - name: Catalog
+    description: Catálogo propio del equipo
+  - name: Measurements
+    description: Mediciones inmutables
+paths:
+  /rest/v1/kpi_catalog:
+    get:
+      tags: [Catalog]
+      summary: Listar el catálogo propio
+      security:
+        - SupabasePublishableKey: []
+          ProjectKey: []
+      parameters:
+        - $ref: '#/components/parameters/AcceptJson'
+        - name: order
+          in: query
+          schema: { type: string, default: id.asc }
+      responses:
+        '200':
+          description: Catálogo visible para la clave del equipo
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/KpiCatalogRead' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [Catalog]
+      summary: Registrar uno o más KPIs
+      description: El servidor asigna `project_id`. Un proyecto puede tener como máximo 10 KPIs activos.
+      security:
+        - SupabasePublishableKey: []
+          ProjectKey: []
+      parameters:
+        - $ref: '#/components/parameters/ContentJson'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/KpiCatalogWrite'
+                - type: array
+                  minItems: 1
+                  maxItems: 10
+                  items: { $ref: '#/components/schemas/KpiCatalogWrite' }
+            examples:
+              catalog:
+                value:
+                  - id: publicaciones_activas
+                    kind: business
+                    unit: '{publicacion}'
+                    description: Cantidad de publicaciones activas al cierre del día.
+                    source: Base transaccional
+                    aggregation: last
+                    justification: Mide la oferta disponible para los usuarios.
+      responses:
+        '201': { description: KPI creado }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    patch:
+      tags: [Catalog]
+      summary: Actualizar descripción, agregación o retiro
+      description: Filtrá el KPI con `id=eq.<kpi_id>`. El identificador nunca se renombra y las filas no se eliminan.
+      security:
+        - SupabasePublishableKey: []
+          ProjectKey: []
+      parameters:
+        - $ref: '#/components/parameters/ContentJson'
+        - name: id
+          in: query
+          required: true
+          description: Filtro PostgREST, por ejemplo `eq.latencia_p95`.
+          schema: { type: string, pattern: '^eq\.[a-z][a-z0-9_]*$' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/KpiCatalogPatch' }
+      responses:
+        '204': { description: KPI actualizado }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /rest/v1/measurement:
+    post:
+      tags: [Measurements]
+      summary: Reportar un lote diario
+      description: |
+        El lote es atómico. `project_id` y `reported_at` los asigna el servidor. El primer valor de cada
+        `(project_id, kpi_id, date, env)` queda para siempre; con `resolution=ignore-duplicates`, reenviar
+        el mismo día no duplica ni modifica. Sólo `prod` cuenta para cumplimiento.
+      security:
+        - SupabasePublishableKey: []
+          ProjectKey: []
+      parameters:
+        - $ref: '#/components/parameters/ContentJson'
+        - name: Prefer
+          in: header
+          required: true
+          schema: { type: string, const: 'resolution=ignore-duplicates' }
+        - name: on_conflict
+          in: query
+          required: true
+          schema: { type: string, const: 'project_id,kpi_id,date,env' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              minItems: 1
+              maxItems: 10
+              items: { $ref: '#/components/schemas/MeasurementWrite' }
+            example:
+              - kpi_id: publicaciones_activas
+                date: '2026-10-09'
+                env: prod
+                value: 42
+                run_id: 0192d36a-7b35-7cc4-b1bd-2d55f0d61a56
+              - kpi_id: latencia_p95
+                date: '2026-10-09'
+                env: prod
+                value: 830
+                run_id: 0192d36a-7b35-7cc4-b1bd-2d55f0d61a56
+      responses:
+        '201': { description: Lote aceptado; los conflictos existentes fueron ignorados }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: La clave no pertenece al ambiente enviado }
+        '409': { $ref: '#/components/responses/Conflict' }
+components:
+  securitySchemes:
+    SupabasePublishableKey:
+      type: apiKey
+      in: header
+      name: apikey
+      description: Clave pública compartida del proyecto Supabase.
+    ProjectKey:
+      type: apiKey
+      in: header
+      name: X-Project-Key
+      description: Clave privada emitida para un equipo y ambiente; se muestra una sola vez.
+  parameters:
+    ContentJson:
+      name: Content-Type
+      in: header
+      required: true
+      schema: { type: string, const: application/json }
+    AcceptJson:
+      name: Accept
+      in: header
+      schema: { type: string, const: application/json }
+  responses:
+    BadRequest:
+      description: Forma, tipo, fecha o límite inválido
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/PostgrestError' }
+    Unauthorized:
+      description: Falta una clave o fue revocada
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/PostgrestError' }
+    Conflict:
+      description: Conflicto de integridad, por ejemplo un KPI ajeno o inexistente
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/PostgrestError' }
+  schemas:
+    KpiKind:
+      type: string
+      enum: [business, technical, health]
+    Environment:
+      type: string
+      enum: [dev, qa, prod]
+    KpiCatalogWrite:
+      type: object
+      additionalProperties: false
+      required: [id, kind, unit, description]
+      properties:
+        id: { type: string, pattern: '^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$', maxLength: 64 }
+        kind: { $ref: '#/components/schemas/KpiKind' }
+        unit: { type: string, minLength: 1, maxLength: 32, pattern: '^\S+$', examples: [ms, s, '%', '1', '{request}'] }
+        description: { type: string, minLength: 5, maxLength: 500 }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        source: { type: string, minLength: 1, maxLength: 200 }
+        aggregation: { type: string, enum: [sum, avg, min, max, last, count] }
+        justification: { type: string, minLength: 1, maxLength: 500 }
+    KpiCatalogPatch:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        description: { type: string, minLength: 5, maxLength: 500 }
+        aggregation: { type: [string, 'null'], enum: [sum, avg, min, max, last, count, null] }
+        deprecated_at: { type: [string, 'null'], format: date }
+    KpiCatalogRead:
+      allOf:
+        - $ref: '#/components/schemas/KpiCatalogWrite'
+        - type: object
+          required: [project_id, frequency, created_at, updated_at]
+          properties:
+            project_id: { type: string, format: uuid }
+            frequency: { type: string, const: daily }
+            deprecated_at: { type: [string, 'null'], format: date }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    MeasurementWrite:
+      type: object
+      additionalProperties: false
+      required: [kpi_id, date, env, value, run_id]
+      properties:
+        kpi_id: { type: string, pattern: '^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$', maxLength: 64 }
+        date: { type: string, format: date, description: Día calendario medido en America/Argentina/Buenos_Aires; nunca futuro. }
+        env: { $ref: '#/components/schemas/Environment' }
+        value: { type: number }
+        run_id: { type: string, format: uuid }
+    PostgrestError:
+      type: object
+      properties:
+        code: { type: string }
+        details: { type: [string, 'null'] }
+        hint: { type: [string, 'null'] }
+        message: { type: string }
