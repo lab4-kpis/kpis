@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { useAsyncData } from "../hooks/use-async-data";
 import { publicConfig } from "../lib/env";
 import { getSupabase } from "../lib/supabase";
-import { cn, downloadCsv, formatDate, formatDateTime, kpiTarget } from "../lib/utils";
+import { cn, downloadCsv, formatDate, formatDateTime } from "../lib/utils";
 import type { ComplianceRow, Environment, KpiCatalogRow, MeasurementRow, Project, ProjectApiKey } from "../types/models";
 
 type Tab = "catalog" | "measurements" | "history" | "keys";
@@ -122,7 +122,7 @@ export function TeamDetailPage() {
 
       {tab === "catalog" ? <CatalogTab rows={data.catalog} activeCount={activeCatalog.length} /> : null}
       {tab === "measurements" ? <MeasurementsTab rows={data.measurements} projectKey={data.project.project_key} /> : null}
-      {tab === "history" ? <HistoryTab rows={data.compliance} projectKey={data.project.project_key} target={kpiTarget(activeCatalog.length)} /> : null}
+      {tab === "history" ? <HistoryTab rows={data.compliance} projectKey={data.project.project_key} /> : null}
       {tab === "keys" ? (
         <KeysTab rows={data.keys} active={data.project.active} env={keyEnv} setEnv={setKeyEnv} issuing={issuing} issue={issueKey} revoke={revokeKey} />
       ) : null}
@@ -167,9 +167,9 @@ function MeasurementsTab({ rows, projectKey }: { rows: MeasurementRow[]; project
   return <><div className="mb-3 flex justify-end"><Button variant="secondary" onClick={() => downloadCsv(`mediciones-${projectKey}.csv`, rows)}><Download className="size-4" />Exportar CSV</Button></div><TableShell><TableHead><tr><Th>Recepción</Th><Th>Fecha medida</Th><Th>KPI</Th><Th>Ambiente</Th><Th>Valor</Th><Th>Run ID</Th></tr></TableHead><TableBody>{rows.map((row) => <TableRow key={`${row.kpi_id}-${row.date}-${row.env}`}><Td>{formatDateTime(row.reported_at)}</Td><Td>{formatDate(row.date)}</Td><Td><code className="font-mono text-xs">{row.kpi_id}</code></Td><Td><Badge variant={row.env === "prod" ? "success" : "neutral"}>{row.env}</Badge></Td><Td><span className="font-mono">{row.value}</span> <span className="text-xs text-muted-foreground">{row.unit}</span></Td><Td><code className="font-mono text-xs text-muted-foreground">{row.run_id.slice(0, 8)}…</code></Td></TableRow>)}</TableBody></TableShell></>;
 }
 
-function HistoryTab({ rows, projectKey, target }: { rows: ComplianceRow[]; projectKey: string; target: number }) {
+function HistoryTab({ rows, projectKey }: { rows: ComplianceRow[]; projectKey: string }) {
   if (!rows.length) return <EmptyState title="Sin días evaluados" description="El historial comienza con el calendario global." />;
-  return <><div className="mb-3 flex justify-end"><Button variant="secondary" onClick={() => downloadCsv(`cumplimiento-${projectKey}.csv`, rows)}><Download className="size-4" />Exportar CSV</Button></div><TableShell><TableHead><tr><Th>Día</Th><Th>Estado</Th><Th>Total</Th><Th>Business</Th><Th>Technical</Th><Th>Health</Th></tr></TableHead><TableBody>{rows.map((row) => <TableRow key={row.report_date}><Td>{formatDate(row.report_date)}</Td><Td><ComplianceBadge status={row.status} /></Td><Td className="font-mono">{row.valid_kpis}/{target}</Td><Td>{row.business_kpis}</Td><Td>{row.technical_kpis}</Td><Td>{row.health_kpis}</Td></TableRow>)}</TableBody></TableShell></>;
+  return <><div className="mb-3 flex justify-end"><Button variant="secondary" onClick={() => downloadCsv(`cumplimiento-${projectKey}.csv`, rows)}><Download className="size-4" />Exportar CSV</Button></div><TableShell><TableHead><tr><Th>Día</Th><Th>Estado</Th><Th>Total</Th><Th>Business</Th><Th>Technical</Th><Th>Health</Th></tr></TableHead><TableBody>{rows.map((row) => <TableRow key={row.report_date}><Td>{formatDate(row.report_date)}</Td><Td><ComplianceBadge status={row.status} /></Td><Td className="font-mono">{row.valid_kpis}/{row.expected_kpis}</Td><Td>{row.business_kpis}</Td><Td>{row.technical_kpis}</Td><Td>{row.health_kpis}</Td></TableRow>)}</TableBody></TableShell></>;
 }
 
 function KeysTab({ rows, active, env, setEnv, issuing, issue, revoke }: { rows: ProjectApiKey[]; active: boolean; env: Environment; setEnv: (env: Environment) => void; issuing: boolean; issue: () => Promise<void>; revoke: (id: string) => Promise<void> }) {

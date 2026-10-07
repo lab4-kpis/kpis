@@ -27,6 +27,7 @@ export interface ComplianceRow {
   health_kpis: number;
   status: ComplianceStatus;
   score: number;
+  expected_kpis: number;
 }
 
 export interface KpiCatalogRow {
