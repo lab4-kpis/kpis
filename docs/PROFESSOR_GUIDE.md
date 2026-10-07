@@ -78,6 +78,8 @@ El workflow usa `npm ci` y no necesita credenciales privadas.
 
 ## MCP opcional para la cuenta local
 
+Para consultar cumplimiento, catálogos y mediciones desde Claude Code o Codex con la cuenta Google del portal, usar el [MCP para profesores](MCP.md). Lo que sigue aplica sólo a quien mantiene la base.
+
 El MCP de Supabase puede agregarse únicamente al Codex del profesor; no forma parte del repositorio:
 
 ```bash
