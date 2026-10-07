@@ -1,0 +1,12 @@
+{
+  "name": "lab4-kpis",
+  "description": "Lab4 KPIs tools for professors.",
+  "owner": { "name": "Lab4 KPIs" },
+  "plugins": [
+    {
+      "name": "lab4-kpis",
+      "source": "./plugins/lab4-kpis",
+      "description": "Read-only access to Lab4 team KPIs, compliance, and audit activity for professors."
+    }
+  ]
+}
