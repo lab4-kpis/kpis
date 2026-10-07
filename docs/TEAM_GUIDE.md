@@ -9,7 +9,7 @@ Guardá `PROJECT_KEY` en el gestor de secretos de tu plataforma. No la escribas 
 
 ## 1. Registrar el catálogo
 
-Antes de reportar, crear entre 5 y 10 KPIs. El mínimo no bloquea técnicamente el catálogo. Un día cuenta como completo sólo si reportan todos los KPIs activos de su catálogo; con menos de 5 KPIs se exigen igual 5, así que nunca llegan a completo.
+Antes de reportar, crear entre 5 y 10 KPIs. **El catálogo es por ambiente:** cada `PROJECT_KEY` registra y lee sólo el catálogo de su ambiente, así que probar con la clave `dev` no fija el de `prod`. Antes del primer envío a `prod` hay que registrar el catálogo con la clave `prod`; sólo ese cuenta para el cumplimiento. El mínimo no bloquea técnicamente el catálogo. Un día cuenta como completo sólo si reportan todos los KPIs activos de su catálogo; con menos de 5 KPIs se exigen igual 5, así que nunca llegan a completo.
 
 ```bash
 curl --fail-with-body \
