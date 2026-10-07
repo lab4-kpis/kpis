@@ -1,4 +1,6 @@
-# Guía para profesores
+# Setup técnico de la plataforma
+
+Para quien mantiene o reconstruye la plataforma. Los profesores no necesitan esto: ver el [instructivo para profesores](entregables/INSTRUCTIVO_PROFESORES.md).
 
 La instalación mantiene las credenciales personales fuera del repositorio. Requiere Node LTS, acceso al proyecto Supabase y este checkout.
 
@@ -40,33 +42,9 @@ La migración crea el esquema, RLS, vistas, funciones y los 16 equipos. El últi
 
 El hook evita crear usuarios fuera de la allowlist; RLS sigue bloqueando el acceso aunque el hook se configurara mal.
 
-## 4. Configurar el período
+## 4. Contacto de cada equipo
 
-Abrir el portal, ingresar con Google y entrar en **Configuración**. Definir inicio, fin y días evaluables. La interfaz usa `DD-MM-YYYY`; la API y la base usan `YYYY-MM-DD`.
-
-No se puede emitir una clave `prod` hasta guardar ambas fechas.
-
-## 5. Habilitar un equipo
-
-Los equipos 1 a 16 ya existen. En **Equipos → detalle → Claves**:
-
-1. elegir `dev`, `qa` o `prod`;
-2. pulsar **Emitir o rotar**;
-3. copiar la clave en ese momento y entregarla por un canal privado;
-4. pedir al equipo que la guarde en su gestor de secretos.
-
-Rotar emite una clave nueva y revoca la anterior en la misma transacción. Desactivar un equipo bloquea sus claves sin cambiar el cumplimiento histórico.
-
-## 6. Operar y consultar
-
-- **Resumen diario** lista primero los equipos sin reporte e indica 0–10 KPIs recibidos.
-- **Equipo → Catálogo** muestra definición, unidad, tipo y retiros.
-- **Equipo → Mediciones** muestra la recepción inmutable y permite exportar CSV.
-- **Equipo → Cumplimiento** muestra el historial por día.
-- **Configuración → Profesores** administra la allowlist; el último administrador activo no puede desactivarse.
-- **Configuración → Actividad reciente** registra cambios sin claves completas.
-
-La documentación interactiva pública está en `#/docs`. Para análisis externo, exportar CSV o conectar Supabase en modo sólo lectura cuando el producto utilizado lo soporte.
+El referente y el teléfono de cada equipo (`projects.contact_name`, `projects.contact_phone`) se cargan por migración y no se editan desde el portal. El teléfono va en dígitos E.164 sin `+`, como lo espera `wa.me`. Ver `supabase/migrations/202610070001_project_contacts.sql`.
 
 ## Publicar en GitHub Pages
 
@@ -76,7 +54,7 @@ La documentación interactiva pública está en `#/docs`. Para análisis externo
 
 El workflow usa `npm ci` y no necesita credenciales privadas.
 
-## MCP opcional para la cuenta local
+## MCP de Supabase para mantenimiento
 
 Para consultar cumplimiento, catálogos y mediciones desde Claude Code o Codex con la cuenta Google del portal, usar el [MCP para profesores](MCP.md). Lo que sigue aplica sólo a quien mantiene la base.
 

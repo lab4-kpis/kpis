@@ -27,7 +27,7 @@ Claude Code / Codex ── stdio ──> @lab4-kpis/mcp (local, via npx) ── 
 
 ### Difference from the official Supabase MCP
 
-The [professor guide](PROFESSOR_GUIDE.md#mcp-opcional-para-la-cuenta-local) mentions Supabase's MCP server. They are different tools:
+The [technical setup](SETUP.md#mcp-de-supabase-para-mantenimiento) mentions Supabase's MCP server. They are different tools:
 
 | | `@lab4-kpis/mcp` | Supabase MCP |
 |---|---|---|

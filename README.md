@@ -64,8 +64,9 @@ No se agregaron tests automatizados ni Playwright por decisión de alcance. La v
 ## Documentación
 
 - [Consigna original](docs/CHALLENGE.md)
-- [Propuesta acordada](docs/PROPUESTA.md)
-- [Guía para profesores](docs/PROFESSOR_GUIDE.md)
+- [Propuesta acordada](docs/entregables/PROPUESTA.md)
+- [Instructivo para profesores](docs/entregables/INSTRUCTIVO_PROFESORES.md)
+- [Setup técnico](docs/SETUP.md)
 - [Guía para equipos](docs/TEAM_GUIDE.md)
 - [Arquitectura](docs/ARCHITECTURE.md)
 - [Checklist manual](docs/SECURITY_CHECKLIST.md)

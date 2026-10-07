@@ -2,7 +2,7 @@
 
 ## Decisión
 
-La solución implementa la opción A de [`PROPUESTA.md`](PROPUESTA.md): Postgres administrado por Supabase es la fuente de verdad y PostgREST expone el contrato sin backend propio. El portal es una SPA estática Vite/React para profesores.
+La solución implementa la opción A de [`PROPUESTA.md`](entregables/PROPUESTA.md): Postgres administrado por Supabase es la fuente de verdad y PostgREST expone el contrato sin backend propio. El portal es una SPA estática Vite/React para profesores.
 
 ```text
 Reporter del equipo ── apikey + X-Project-Key ──> PostgREST ──> RLS + triggers ──> Postgres
