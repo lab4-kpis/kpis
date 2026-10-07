@@ -9,7 +9,7 @@ const INSTRUCTIONS = `Read-only access to the Lab4 daily KPI reporting platform,
 
 Compliance rules (same as the portal):
 - Only "prod" measurements count, grouped by reception date in America/Argentina/Buenos_Aires, not by the date the team declared.
-- A day is "complete" with 5 or more distinct KPIs, "incomplete" with 1 to 4, and "missing" with 0. The score is the number of distinct KPIs, capped at 10.
+- A day is "complete" when the team reports every KPI active in its catalog that day (at least 5, at most 10), "incomplete" with fewer, and "missing" with 0. The score is the number of distinct KPIs, capped at 10.
 - Only the configured weekdays inside the reporting period are evaluated, never future days.
 
 Dates use YYYY-MM-DD. A team is its number (1-16) or its project_key.
