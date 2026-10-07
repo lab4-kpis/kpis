@@ -1,0 +1,62 @@
+name: Publish MCP package
+
+# Publishes @lab4-kpis/mcp to npm with trusted publishing (OIDC): no npm token is stored.
+# Runs on every push to main that touches the package and skips versions already published.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mcp/**"
+      - "plugins/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: mcp-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mcp
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@^11.5.1
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate
+        run: npm run typecheck && node scripts/check-plugin-versions.mjs
+      - name: Check whether this version is already published
+        id: published
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if npm view "@lab4-kpis/mcp@${version}" version >/dev/null 2>&1; then
+            echo "already=true" >> "$GITHUB_OUTPUT"
+            echo "@lab4-kpis/mcp@${version} is already on npm; nothing to publish."
+          fi
+      - name: Build
+        if: steps.published.outputs.already != 'true'
+        run: npm run build
+        env:
+          PROD_SUPABASE_URL: https://rzlalzowistpiphmdqpp.supabase.co
+          PROD_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          DEV_SUPABASE_URL: ${{ vars.DEV_VITE_SUPABASE_URL }}
+          DEV_SUPABASE_PUBLISHABLE_KEY: ${{ vars.DEV_VITE_SUPABASE_PUBLISHABLE_KEY }}
+      - name: Publish
+        if: steps.published.outputs.already != 'true'
+        run: npm publish --ignore-scripts
