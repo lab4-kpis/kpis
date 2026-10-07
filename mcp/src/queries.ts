@@ -64,7 +64,7 @@ export async function dailySummary(client: KpisClient, date: string) {
   const rows = unwrap(
     await client
       .from("v_compliance")
-      .select("team_number,project_key,project_name,valid_kpis,business_kpis,technical_kpis,health_kpis,status,score")
+      .select("team_number,project_key,project_name,valid_kpis,business_kpis,technical_kpis,health_kpis,status,score,expected_kpis")
       .eq("report_date", date),
     "the daily summary",
   );
@@ -84,7 +84,7 @@ export async function compliance(client: KpisClient, options: { team?: TeamRef; 
   assertRange(options.from, options.to);
   let query = client
     .from("v_compliance")
-    .select("team_number,project_key,report_date,valid_kpis,business_kpis,technical_kpis,health_kpis,status,score")
+    .select("team_number,project_key,report_date,valid_kpis,business_kpis,technical_kpis,health_kpis,status,score,expected_kpis")
     .gte("report_date", options.from)
     .lte("report_date", options.to);
   if (options.team !== undefined) query = query.eq("project_id", (await resolveTeam(client, options.team)).id);
