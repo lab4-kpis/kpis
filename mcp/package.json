@@ -1,6 +1,6 @@
 {
   "name": "@lab4-kpis/mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Read-only MCP server for Lab4 professors to query daily team KPIs from Claude Code or Codex.",
   "type": "module",
   "repository": {

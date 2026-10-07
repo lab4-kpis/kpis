@@ -2,7 +2,7 @@
   "mcpServers": {
     "lab4-kpis": {
       "command": "npx",
-      "args": ["-y", "@lab4-kpis/mcp@0.1.0"]
+      "args": ["-y", "@lab4-kpis/mcp@0.1.1"]
     }
   }
 }
