@@ -1,0 +1,41 @@
+{
+  "name": "@lab4-kpis/mcp",
+  "version": "0.1.0",
+  "description": "Read-only MCP server for Lab4 professors to query daily team KPIs from Claude Code or Codex.",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lab4-kpis/kpis.git",
+    "directory": "mcp"
+  },
+  "homepage": "https://github.com/lab4-kpis/kpis/blob/main/docs/MCP.md",
+  "bin": {
+    "lab4-kpis-mcp": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "dev": "LAB4_KPIS_ENV=dev node --env-file=../.env.development src/cli.ts",
+    "typecheck": "tsc",
+    "build": "node scripts/build.mjs",
+    "prepublishOnly": "npm run typecheck && npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@supabase/supabase-js": "^2.117.2",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "esbuild": "^0.28.2",
+    "typescript": "~5.9.3"
+  }
+}
