@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import type { Session, User } from "@supabase/supabase-js";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { publicConfig } from "../lib/env";
 import { getSupabase } from "../lib/supabase";
 
@@ -21,9 +21,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [authorized, setAuthorized] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const verifiedUserId = useRef<string | null>(null);
 
   const verify = useCallback(async (nextSession: Session | null) => {
     setSession(nextSession);
+    // Supabase re-emite la sesión al volver a la pestaña y al refrescar el token;
+    // revalidar ahí desmontaría la app y se perdería la pantalla abierta.
+    if (nextSession && nextSession.user.id === verifiedUserId.current) return;
+    verifiedUserId.current = null;
     setAuthorized(false);
     if (!nextSession) {
       setLoading(false);
@@ -34,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthError(error.message);
     } else {
       setAuthorized(data === true);
+      if (data === true) verifiedUserId.current = nextSession.user.id;
       setAuthError(data === true ? null : "Tu cuenta no está habilitada como profesora o profesor.");
     }
     setLoading(false);
