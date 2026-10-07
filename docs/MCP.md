@@ -1,6 +1,6 @@
 # MCP server for professors
 
-> **Status:** `@lab4-kpis/mcp@0.1.0` is published on npm and tested against the development project. The plugin marketplaces become installable once this lands on `main`. See [Pending validation](#pending-validation) for what remains.
+> **Status:** `@lab4-kpis/mcp@0.1.0` is published on npm and tested against the development project. `0.1.1`, which the plugins pin, is published by the workflow when this lands on `main`; the plugin marketplaces become installable at the same time. See [Pending validation](#pending-validation) for what remains.
 
 A **read-only** MCP server for querying compliance, KPI catalogs, measurements, and audit activity from Claude Code or Codex, using the same Google identity and the same permissions as the portal. Teams keep reporting through the API; the MCP server never writes data.
 
@@ -69,15 +69,15 @@ The plugin can also be installed from `/plugins` inside Codex.
 Both clients accept the server directly. This is useful to try a specific version or to use the development database:
 
 ```bash
-claude mcp add --scope user lab4-kpis -- npx -y @lab4-kpis/mcp@0.1.0
-codex mcp add lab4-kpis -- npx -y @lab4-kpis/mcp@0.1.0
+claude mcp add --scope user lab4-kpis -- npx -y @lab4-kpis/mcp@0.1.1
+codex mcp add lab4-kpis -- npx -y @lab4-kpis/mcp@0.1.1
 ```
 
 For the development database, use a different name and `LAB4_KPIS_ENV=dev`. The plugin always targets production.
 
 ```bash
-claude mcp add --scope user lab4-kpis-dev -e LAB4_KPIS_ENV=dev -- npx -y @lab4-kpis/mcp@0.1.0
-codex mcp add lab4-kpis-dev --env LAB4_KPIS_ENV=dev -- npx -y @lab4-kpis/mcp@0.1.0
+claude mcp add --scope user lab4-kpis-dev -e LAB4_KPIS_ENV=dev -- npx -y @lab4-kpis/mcp@0.1.1
+codex mcp add lab4-kpis-dev --env LAB4_KPIS_ENV=dev -- npx -y @lab4-kpis/mcp@0.1.1
 ```
 
 ### Verify
@@ -93,7 +93,7 @@ Ask the agent to *"sign in to Lab4 KPIs"*. The `login` tool opens the browser an
 If the browser does not open (for example, over SSH), or the agent cannot start the login, run this in a terminal:
 
 ```bash
-npx -y @lab4-kpis/mcp@0.1.0 login
+npx -y @lab4-kpis/mcp@0.1.1 login
 ```
 
 It prints the URL to open by hand, waits for the browser, and saves the session to the same file the server reads.
@@ -134,7 +134,7 @@ The server sends these rules to the agent as instructions; they match `v_complia
 
 ### Sign out
 
-Ask the agent to *"sign out of Lab4 KPIs"* or run `npx -y @lab4-kpis/mcp@0.1.0 logout`. It revokes this session's refresh token in Supabase, leaves the portal signed in, and deletes the local file.
+Ask the agent to *"sign out of Lab4 KPIs"* or run `npx -y @lab4-kpis/mcp@0.1.1 logout`. It revokes this session's refresh token in Supabase, leaves the portal signed in, and deletes the local file.
 
 ### Environment variables
 
@@ -252,7 +252,7 @@ Already verified:
 
 Still pending:
 
-- The publish workflow through trusted publishing. `0.1.0` was published by hand, so the workflow skips it; the first real run is the next version.
+- The publish workflow through trusted publishing. `0.1.0` was published by hand; `0.1.1` is the first version the workflow publishes, and it must run before 2026-10-09 02:08 UTC so npm validates the trusted publisher.
 - Installing the plugins from the marketplaces, which read `main`.
 - Whether the `login` tool can open the browser and listen on loopback from inside Codex's sandbox. If it cannot, the `npx ... login` command is the fallback.
 - Whether `codex plugin marketplace upgrade` is enough to pick up a new plugin version, or `codex plugin add` must be run again.

@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "lab4-kpis",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Read-only access to Lab4 team KPIs, compliance, and audit activity for professors."
 }
