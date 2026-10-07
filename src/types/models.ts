@@ -8,6 +8,8 @@ export interface Project {
   project_key: string;
   name: string;
   active: boolean;
+  contact_name: string | null;
+  contact_phone: string | null;
   created_at: string;
   updated_at: string;
   deactivated_at: string | null;

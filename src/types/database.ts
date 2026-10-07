@@ -120,13 +120,13 @@ isOneToOne: false
                   ]
                 },"projects": {
                   Row: {
-                    "active": boolean,"created_at": string,"deactivated_at": string | null,"id": string,"name": string,"project_key": string,"team_number": number,"updated_at": string
+                    "active": boolean,"contact_name": string | null,"contact_phone": string | null,"created_at": string,"deactivated_at": string | null,"id": string,"name": string,"project_key": string,"team_number": number,"updated_at": string
                   }
                   Insert: {
-                    "active"?: boolean,"created_at"?: string,"deactivated_at"?: string | null,"id"?: string,"name": string,"project_key": string,"team_number": number,"updated_at"?: string
+                    "active"?: boolean,"contact_name"?: string | null,"contact_phone"?: string | null,"created_at"?: string,"deactivated_at"?: string | null,"id"?: string,"name": string,"project_key": string,"team_number": number,"updated_at"?: string
                   }
                   Update: {
-                    "active"?: boolean,"created_at"?: string,"deactivated_at"?: string | null,"id"?: string,"name"?: string,"project_key"?: string,"team_number"?: number,"updated_at"?: string
+                    "active"?: boolean,"contact_name"?: string | null,"contact_phone"?: string | null,"created_at"?: string,"deactivated_at"?: string | null,"id"?: string,"name"?: string,"project_key"?: string,"team_number"?: number,"updated_at"?: string
                   }
                   Relationships: [
 
