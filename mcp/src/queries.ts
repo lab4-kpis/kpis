@@ -51,7 +51,7 @@ export async function reportingPeriod(client: KpisClient) {
 export async function listTeams(client: KpisClient) {
   const [projects, catalog] = await Promise.all([
     client.from("projects").select("id,team_number,project_key,name,active,deactivated_at").order("team_number"),
-    client.from("kpi_catalog").select("project_id,deprecated_at"),
+    client.from("kpi_catalog").select("project_id,deprecated_at").eq("env", "prod"),
   ]);
   const activeKpis = new Map<string, number>();
   for (const kpi of unwrap(catalog, "the KPI catalog")) {
@@ -115,17 +115,18 @@ export async function compliance(client: KpisClient, options: { team?: TeamRef; 
   };
 }
 
-export async function teamCatalog(client: KpisClient, team: TeamRef) {
+export async function teamCatalog(client: KpisClient, team: TeamRef, env: ReportingEnvironment = "prod") {
   const project = await resolveTeam(client, team);
   const kpis = unwrap(
     await client
       .from("kpi_catalog")
       .select("id,name,kind,unit,description,source,aggregation,justification,deprecated_at,created_at,updated_at")
       .eq("project_id", project.id)
+      .eq("env", env)
       .order("id"),
     "the KPI catalog",
   );
-  return { team: { team_number: project.team_number, project_key: project.project_key, name: project.name, active: project.active }, kpis };
+  return { team: { team_number: project.team_number, project_key: project.project_key, name: project.name, active: project.active }, env, kpis };
 }
 
 export async function teamMeasurements(
