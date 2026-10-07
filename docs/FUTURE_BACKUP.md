@@ -1,6 +1,6 @@
 # Mejora posterior: réplica diaria en GitHub
 
-Esta entrega usa Supabase/Postgres como única fuente de verdad. La copia diaria a GitHub propuesta en el anexo B de [`PROPUESTA.md`](PROPUESTA.md) queda deliberadamente fuera del alcance inicial para evitar sumar credenciales, workflows y una segunda ruta operativa antes de validar la plataforma central.
+Esta entrega usa Supabase/Postgres como única fuente de verdad. La copia diaria a GitHub propuesta en el anexo B de [`PROPUESTA.md`](entregables/PROPUESTA.md) queda deliberadamente fuera del alcance inicial para evitar sumar credenciales, workflows y una segunda ruta operativa antes de validar la plataforma central.
 
 ## Objetivo futuro
 
