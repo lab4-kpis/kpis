@@ -131,12 +131,14 @@ export function TeamDetailPage() {
         <DialogContent>
           <DialogHeader><DialogTitle>Guardá esta clave ahora</DialogTitle><DialogDescription>Es la única vez que se muestra. La base conserva solamente su hash SHA-256.</DialogDescription></DialogHeader>
           <div className="rounded-md border bg-muted p-3"><p className="mb-1 text-xs font-medium uppercase text-muted-foreground">Ambiente {secret?.env}</p><code className="break-all font-mono text-sm">{secret?.value}</code></div>
-          <Button onClick={() => void copySecret()}>{copied ? <Check className="size-4" /> : <Clipboard className="size-4" />}{copied ? "Copiada" : "Copiar clave"}</Button>
-          {secret && data.project.contact_phone ? (
-            <Button asChild variant="secondary">
-              <a href={whatsappKeyUrl(data.project, secret.env, secret.value)} target="_blank" rel="noreferrer"><MessageCircle className="size-4" />Enviar por WhatsApp a {data.project.contact_name}</a>
-            </Button>
-          ) : null}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button onClick={() => void copySecret()}>{copied ? <Check className="size-4" /> : <Clipboard className="size-4" />}{copied ? "Copiada" : "Copiar clave"}</Button>
+            {secret && data.project.contact_phone ? (
+              <Button asChild className="bg-success text-white hover:bg-[#11603c]">
+                <a href={whatsappKeyUrl(data.project, secret.env, secret.value)} target="_blank" rel="noreferrer"><MessageCircle className="size-4" />Enviar por WhatsApp al PM</a>
+              </Button>
+            ) : null}
+          </div>
         </DialogContent>
       </Dialog>
       <Dialog open={deactivatePending} onOpenChange={setDeactivatePending}>
