@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Clipboard, Download, Power, RefreshCw, ShieldX } from "lucide-react";
+import { ArrowLeft, Check, Clipboard, Download, MessageCircle, Power, RefreshCw, ShieldX } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ComplianceBadge } from "../components/compliance-badge";
@@ -11,11 +11,29 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { EmptyState, ErrorState, LoadingState } from "../components/ui/feedback";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { useAsyncData } from "../hooks/use-async-data";
+import { publicConfig } from "../lib/env";
 import { getSupabase } from "../lib/supabase";
-import { cn, downloadCsv, formatDate, formatDateTime } from "../lib/utils";
+import { cn, downloadCsv, formatDate, formatDateTime, kpiTarget } from "../lib/utils";
 import type { ComplianceRow, Environment, KpiCatalogRow, MeasurementRow, Project, ProjectApiKey } from "../types/models";
 
 type Tab = "catalog" | "measurements" | "history" | "keys";
+
+function whatsappKeyUrl(project: Project, env: Environment, key: string) {
+  const docsUrl = `${window.location.origin}${window.location.pathname}#/docs`;
+  const text = [
+    `Hola ${project.contact_name}! Esta es la clave ${env} de ${project.name} (equipo ${project.team_number}) para reportar KPIs.`,
+    "",
+    `PROJECT_KEY=${key}`,
+    `SUPABASE_URL=${publicConfig.supabaseUrl}`,
+    `SUPABASE_PUBLISHABLE_KEY=${publicConfig.publishableKey}`,
+    `ENV=${env}`,
+    "",
+    `Guía y ejemplos: ${docsUrl}`,
+    "",
+    "Guardala en el gestor de secretos, no la subas al repo. dev no cuenta para la nota; sólo prod suma.",
+  ].join("\n");
+  return `https://wa.me/${project.contact_phone}?text=${encodeURIComponent(text)}`;
+}
 
 async function loadProjectDetail(projectId: string) {
   const [projectResult, catalogResult, measurementResult, complianceResult, keysResult] = await Promise.all([
@@ -104,7 +122,7 @@ export function TeamDetailPage() {
 
       {tab === "catalog" ? <CatalogTab rows={data.catalog} activeCount={activeCatalog.length} /> : null}
       {tab === "measurements" ? <MeasurementsTab rows={data.measurements} projectKey={data.project.project_key} /> : null}
-      {tab === "history" ? <HistoryTab rows={data.compliance} projectKey={data.project.project_key} /> : null}
+      {tab === "history" ? <HistoryTab rows={data.compliance} projectKey={data.project.project_key} target={kpiTarget(activeCatalog.length)} /> : null}
       {tab === "keys" ? (
         <KeysTab rows={data.keys} active={data.project.active} env={keyEnv} setEnv={setKeyEnv} issuing={issuing} issue={issueKey} revoke={revokeKey} />
       ) : null}
@@ -113,7 +131,14 @@ export function TeamDetailPage() {
         <DialogContent>
           <DialogHeader><DialogTitle>Guardá esta clave ahora</DialogTitle><DialogDescription>Es la única vez que se muestra. La base conserva solamente su hash SHA-256.</DialogDescription></DialogHeader>
           <div className="rounded-md border bg-muted p-3"><p className="mb-1 text-xs font-medium uppercase text-muted-foreground">Ambiente {secret?.env}</p><code className="break-all font-mono text-sm">{secret?.value}</code></div>
-          <Button onClick={() => void copySecret()}>{copied ? <Check className="size-4" /> : <Clipboard className="size-4" />}{copied ? "Copiada" : "Copiar clave"}</Button>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button onClick={() => void copySecret()}>{copied ? <Check className="size-4" /> : <Clipboard className="size-4" />}{copied ? "Copiada" : "Copiar clave"}</Button>
+            {secret && data.project.contact_phone ? (
+              <Button asChild className="bg-success text-white hover:bg-[#11603c]">
+                <a href={whatsappKeyUrl(data.project, secret.env, secret.value)} target="_blank" rel="noreferrer"><MessageCircle className="size-4" />Enviar por WhatsApp al PM</a>
+              </Button>
+            ) : null}
+          </div>
         </DialogContent>
       </Dialog>
       <Dialog open={deactivatePending} onOpenChange={setDeactivatePending}>
@@ -142,9 +167,9 @@ function MeasurementsTab({ rows, projectKey }: { rows: MeasurementRow[]; project
   return <><div className="mb-3 flex justify-end"><Button variant="secondary" onClick={() => downloadCsv(`mediciones-${projectKey}.csv`, rows)}><Download className="size-4" />Exportar CSV</Button></div><TableShell><TableHead><tr><Th>Recepción</Th><Th>Fecha medida</Th><Th>KPI</Th><Th>Ambiente</Th><Th>Valor</Th><Th>Run ID</Th></tr></TableHead><TableBody>{rows.map((row) => <TableRow key={`${row.kpi_id}-${row.date}-${row.env}`}><Td>{formatDateTime(row.reported_at)}</Td><Td>{formatDate(row.date)}</Td><Td><code className="font-mono text-xs">{row.kpi_id}</code></Td><Td><Badge variant={row.env === "prod" ? "success" : "neutral"}>{row.env}</Badge></Td><Td><span className="font-mono">{row.value}</span> <span className="text-xs text-muted-foreground">{row.unit}</span></Td><Td><code className="font-mono text-xs text-muted-foreground">{row.run_id.slice(0, 8)}…</code></Td></TableRow>)}</TableBody></TableShell></>;
 }
 
-function HistoryTab({ rows, projectKey }: { rows: ComplianceRow[]; projectKey: string }) {
+function HistoryTab({ rows, projectKey, target }: { rows: ComplianceRow[]; projectKey: string; target: number }) {
   if (!rows.length) return <EmptyState title="Sin días evaluados" description="El historial comienza con el calendario global." />;
-  return <><div className="mb-3 flex justify-end"><Button variant="secondary" onClick={() => downloadCsv(`cumplimiento-${projectKey}.csv`, rows)}><Download className="size-4" />Exportar CSV</Button></div><TableShell><TableHead><tr><Th>Día</Th><Th>Estado</Th><Th>Total</Th><Th>Business</Th><Th>Technical</Th><Th>Health</Th></tr></TableHead><TableBody>{rows.map((row) => <TableRow key={row.report_date}><Td>{formatDate(row.report_date)}</Td><Td><ComplianceBadge status={row.status} /></Td><Td className="font-mono">{row.valid_kpis}/10</Td><Td>{row.business_kpis}</Td><Td>{row.technical_kpis}</Td><Td>{row.health_kpis}</Td></TableRow>)}</TableBody></TableShell></>;
+  return <><div className="mb-3 flex justify-end"><Button variant="secondary" onClick={() => downloadCsv(`cumplimiento-${projectKey}.csv`, rows)}><Download className="size-4" />Exportar CSV</Button></div><TableShell><TableHead><tr><Th>Día</Th><Th>Estado</Th><Th>Total</Th><Th>Business</Th><Th>Technical</Th><Th>Health</Th></tr></TableHead><TableBody>{rows.map((row) => <TableRow key={row.report_date}><Td>{formatDate(row.report_date)}</Td><Td><ComplianceBadge status={row.status} /></Td><Td className="font-mono">{row.valid_kpis}/{target}</Td><Td>{row.business_kpis}</Td><Td>{row.technical_kpis}</Td><Td>{row.health_kpis}</Td></TableRow>)}</TableBody></TableShell></>;
 }
 
 function KeysTab({ rows, active, env, setEnv, issuing, issue, revoke }: { rows: ProjectApiKey[]; active: boolean; env: Environment; setEnv: (env: Environment) => void; issuing: boolean; issue: () => Promise<void>; revoke: (id: string) => Promise<void> }) {

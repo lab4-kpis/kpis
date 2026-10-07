@@ -28,7 +28,9 @@ coverage/
 supabase/.temp/
 supabase/.branches/
 .codex/
-.agents/
+# The Codex marketplace for the MCP plugin is versioned.
+.agents/*
+!.agents/plugins/
 .cache/
 .turbo/
 

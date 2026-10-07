@@ -8,15 +8,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 import { EmptyState, ErrorState, LoadingState } from "../components/ui/feedback";
 import { useAsyncData } from "../hooks/use-async-data";
 import { getSupabase } from "../lib/supabase";
-import { downloadCsv, formatDate } from "../lib/utils";
+import { downloadCsv, formatDate, kpiTarget } from "../lib/utils";
 import type { ComplianceRow } from "../types/models";
 
 async function loadCompliance() {
-  const { data, error } = await getSupabase().from("v_compliance").select("*").order("report_date", { ascending: false }).limit(1000);
+  const [complianceResult, catalogResult] = await Promise.all([
+    getSupabase().from("v_compliance").select("*").order("report_date", { ascending: false }).limit(1000),
+    getSupabase().from("kpi_catalog").select("project_id").is("deprecated_at", null),
+  ]);
+  const error = complianceResult.error ?? catalogResult.error;
   if (error) throw error;
-  const rows = (data ?? []) as unknown as ComplianceRow[];
+  const activeKpis = new Map<string, number>();
+  for (const { project_id } of catalogResult.data ?? []) activeKpis.set(project_id, (activeKpis.get(project_id) ?? 0) + 1);
+  const rows = (complianceResult.data ?? []) as unknown as ComplianceRow[];
   const latestDate = rows[0]?.report_date ?? null;
-  return { latestDate, rows: latestDate ? rows.filter((row) => row.report_date === latestDate).sort((a, b) => a.team_number - b.team_number) : [] };
+  return { latestDate, activeKpis, rows: latestDate ? rows.filter((row) => row.report_date === latestDate).sort((a, b) => a.team_number - b.team_number) : [] };
 }
 
 export function DashboardPage() {
@@ -56,7 +62,7 @@ export function DashboardPage() {
                 <TableRow key={row.project_id} className="hover:bg-[#fafbfc]">
                   <Td><Link className="font-medium text-primary hover:underline" to={`/teams/${row.project_id}`}>{row.team_number}. {row.project_name}</Link><p className="font-mono text-xs text-muted-foreground">{row.project_key}</p></Td>
                   <Td><ComplianceBadge status={row.status} /></Td>
-                  <Td><span className="font-mono font-medium">{row.valid_kpis}/10</span></Td>
+                  <Td><span className="font-mono font-medium">{row.valid_kpis}/{kpiTarget(data?.activeKpis.get(row.project_id) ?? 0)}</span></Td>
                   <Td>{row.business_kpis}</Td><Td>{row.technical_kpis}</Td><Td>{row.health_kpis}</Td>
                 </TableRow>
               ))}

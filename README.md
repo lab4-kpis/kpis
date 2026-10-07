@@ -8,8 +8,9 @@ Plataforma central y minimalista para recibir KPIs diarios de los equipos de Lab
 - `src`: portal docente con Google OAuth, cumplimiento, equipos, claves, calendario, auditoría y CSV.
 - `public/openapi.yaml`: contrato OpenAPI publicado en `#/docs`.
 - `examples`: integraciones mínimas en curl, TypeScript y Python.
+- `mcp` y `plugins`: servidor MCP de sólo lectura para profesores y sus plugins de Claude Code y Codex.
 - `public/schemas`: JSON Schema publicado del lote de mediciones.
-- `docs`: instalación y operación.
+- `docs`: instalación y operación. [`docs/MCP.md`](docs/MCP.md) describe el MCP de consulta para profesores.
 
 ## Desarrollo local
 
@@ -63,8 +64,9 @@ No se agregaron tests automatizados ni Playwright por decisión de alcance. La v
 ## Documentación
 
 - [Consigna original](docs/CHALLENGE.md)
-- [Propuesta acordada](docs/PROPUESTA.md)
-- [Guía para profesores](docs/PROFESSOR_GUIDE.md)
+- [Propuesta acordada](docs/entregables/PROPUESTA.md)
+- [Instructivo para profesores](docs/entregables/INSTRUCTIVO_PROFESORES.md)
+- [Setup técnico](docs/SETUP.md)
 - [Guía para equipos](docs/TEAM_GUIDE.md)
 - [Arquitectura](docs/ARCHITECTURE.md)
 - [Checklist manual](docs/SECURITY_CHECKLIST.md)

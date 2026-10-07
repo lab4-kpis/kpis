@@ -5,7 +5,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", "src/types/database.ts"] },
+  { ignores: ["dist", "mcp/dist", "src/types/database.ts"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -21,5 +21,9 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
     },
+  },
+  {
+    files: ["mcp/**/*.{ts,mjs}"],
+    languageOptions: { globals: globals.node },
   },
 );

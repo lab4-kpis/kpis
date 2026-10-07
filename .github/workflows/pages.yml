@@ -8,6 +8,13 @@ name: Deploy portal to GitHub Pages
 on:
   push:
     branches: [main, dev]
+    # The MCP package is published by its own workflow (mcp-publish.yml).
+    paths-ignore:
+      - "mcp/**"
+      - "plugins/**"
+      - ".claude-plugin/**"
+      - ".agents/**"
+      - ".github/workflows/mcp-publish.yml"
   workflow_dispatch:
 
 permissions:
