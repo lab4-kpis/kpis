@@ -9,7 +9,7 @@ La plataforma recibe todos los días entre 5 y 10 KPIs de cada equipo y los mues
 - [ ] 1. Mandar al grupo de WhatsApp de Lab IV un Gmail por profesor y el usuario de GitHub del profesor que quede como owner.
 - [ ] 2. El profesor owner acepta las invitaciones de GitHub y Supabase.
 - [ ] 3. Configurar el período de evaluación.
-- [ ] 4. Emitir las claves `dev` y `prod` de los 16 equipos y mandarlas por WhatsApp.
+- [ ] 4. Emitir la clave `prod` de los 16 equipos y mandarla por WhatsApp.
 - [ ] 5. El primer día del período, revisar el **Resumen diario**.
 - [ ] 6. *(Opcional)* Conectar el MCP a Claude Code o Codex.
 
@@ -50,14 +50,12 @@ Sólo se evalúan los días marcados dentro del período, en hora de Argentina y
 
 ## 4. Habilitar un equipo
 
-Los 16 equipos ya están cargados, cada uno con su referente. Para cada equipo:
+Los 16 equipos ya están cargados, cada uno con su referente. Los equipos ya tienen su clave `dev` y prueban contra el ambiente de testing, que no cuenta para la nota. El profesor sólo emite la clave **`prod`**, que es la que suma. Para cada equipo:
 
 1. Ir a **Equipos**, abrir el equipo y entrar en la pestaña **Claves**.
-2. Elegir **`dev`** y pulsar **Emitir o rotar**.
+2. Elegir **`prod`** y pulsar **Emitir o rotar**.
 3. En la ventana que se abre, pulsar **Enviar por WhatsApp a {referente}**. Se abre WhatsApp con un mensaje listo que trae la clave y todo lo que el equipo necesita para integrarse. Enviarlo.
-4. Repetir con **`prod`**.
 
-- **`dev`** sirve para que el equipo pruebe su integración y **no cuenta para la nota**. Sólo suma **`prod`**.
 - La clave se ve **una sola vez**. Si el equipo la pierde o la filtra, pulsar **Emitir o rotar** de nuevo: se emite una clave nueva y la anterior deja de funcionar en el mismo momento.
 - **Equipo nuevo:** en **Equipos → Nuevo equipo**, cargar número, nombre e identificador (`equipo-17-nombre`). Un equipo nuevo no tiene referente cargado, así que no aparece el botón de WhatsApp: copiar la clave y mandarla por mensaje privado.
 - **Desactivar equipo** bloquea todas sus claves y **no se puede deshacer**. El historial se conserva.
