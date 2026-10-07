@@ -59,7 +59,7 @@ export function TeamDetailPage() {
   const { data, loading, error, reload } = useAsyncData(() => loadProjectDetail(projectId), projectId);
   const [tab, setTab] = useState<Tab>("catalog");
   const [secret, setSecret] = useState<{ value: string; prefix: string; env: Environment } | null>(null);
-  const [keyEnv, setKeyEnv] = useState<Environment>("dev");
+  const [keyEnv, setKeyEnv] = useState<Environment>("prod");
   const [actionError, setActionError] = useState<string | null>(null);
   const [issuing, setIssuing] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -191,7 +191,7 @@ function KeysTab({ rows, active, env, setEnv, issuing, issue, revoke }: { rows: 
       </div>
     </CardHeader>
     <CardContent>
-      {!rows.length ? <EmptyState title="No hay claves emitidas" description="Empezá por dev. Producción exige un calendario configurado." /> : <TableShell><TableHead><tr><Th>Ambiente</Th><Th>Prefijo</Th><Th>Emitida</Th><Th>Último uso</Th><Th>Estado</Th><Th /></tr></TableHead><TableBody>{rows.map((row) => <TableRow key={row.id}><Td><Badge variant={row.env === "prod" ? "success" : "neutral"}>{row.env}</Badge></Td><Td><code className="font-mono text-xs">{row.key_prefix}…</code></Td><Td>{formatDateTime(row.created_at)}</Td><Td>{formatDateTime(row.last_used_at)}</Td><Td>{row.revoked_at ? <Badge>Revocada</Badge> : <Badge variant="success">Activa</Badge>}</Td><Td>{!row.revoked_at ? <Button variant="ghost" size="sm" onClick={() => setPendingKeyId(row.id)}><ShieldX className="size-4" />Revocar</Button> : null}</Td></TableRow>)}</TableBody></TableShell>}
+      {!rows.length ? <EmptyState title="No hay claves emitidas" description="Emití la clave prod. Requiere el período configurado en Configuración." /> : <TableShell><TableHead><tr><Th>Ambiente</Th><Th>Prefijo</Th><Th>Emitida</Th><Th>Último uso</Th><Th>Estado</Th><Th /></tr></TableHead><TableBody>{rows.map((row) => <TableRow key={row.id}><Td><Badge variant={row.env === "prod" ? "success" : "neutral"}>{row.env}</Badge></Td><Td><code className="font-mono text-xs">{row.key_prefix}…</code></Td><Td>{formatDateTime(row.created_at)}</Td><Td>{formatDateTime(row.last_used_at)}</Td><Td>{row.revoked_at ? <Badge>Revocada</Badge> : <Badge variant="success">Activa</Badge>}</Td><Td>{!row.revoked_at ? <Button variant="ghost" size="sm" onClick={() => setPendingKeyId(row.id)}><ShieldX className="size-4" />Revocar</Button> : null}</Td></TableRow>)}</TableBody></TableShell>}
       <p className="mt-3 text-xs text-muted-foreground">{activeKeys.length} {activeKeys.length === 1 ? "clave activa" : "claves activas"}. El texto completo nunca se vuelve a mostrar.</p>
     </CardContent>
     <Dialog open={pendingKeyId !== null} onOpenChange={(open) => { if (!open) setPendingKeyId(null); }}><DialogContent><DialogHeader><DialogTitle>Revocar clave</DialogTitle><DialogDescription>La integración que usa esta clave dejará de reportar inmediatamente.</DialogDescription></DialogHeader><div className="flex justify-end gap-2"><Button variant="secondary" onClick={() => setPendingKeyId(null)}>Cancelar</Button><Button variant="danger" onClick={() => void confirmAction()}>Confirmar</Button></div></DialogContent></Dialog>
