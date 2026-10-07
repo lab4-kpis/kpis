@@ -1,6 +1,6 @@
 # MCP server for professors
 
-> **Status:** implemented and tested against the development project; not yet published to npm. See [Pending validation](#pending-validation) for what remains.
+> **Status:** `@lab4-kpis/mcp@0.1.0` is published on npm and tested against the development project. The plugin marketplaces become installable once this lands on `main`. See [Pending validation](#pending-validation) for what remains.
 
 A **read-only** MCP server for querying compliance, KPI catalogs, measurements, and audit activity from Claude Code or Codex, using the same Google identity and the same permissions as the portal. Teams keep reporting through the API; the MCP server never writes data.
 
@@ -218,11 +218,18 @@ The Supabase URL and publishable key of each environment are bundled into the pa
 
 The package is published as **public** on npm with [trusted publishing](https://docs.npmjs.com/trusted-publishers): GitHub Actions authenticates through OIDC and no npm token is stored in the repository. Installing it needs no account or token.
 
-One-time setup:
+One-time setup (done for `0.1.0`; kept for reference):
 
-1. Create the `lab4-kpis` organization on npmjs.com and add the repository maintainers as owners.
-2. Publish the first version once by hand from `mcp/` (trusted publishers are configured per existing package): set the `PROD_*` and `DEV_*` variables from [scripts/build.mjs](../mcp/scripts/build.mjs), then run `npm run build && npm publish`.
-3. In the package settings, add a trusted publisher for GitHub Actions with repository `lab4-kpis/kpis` and workflow `mcp-publish.yml`.
+1. Create the `lab4-kpis` organization on npmjs.com and add the repository maintainers as owners. Owning the GitHub organization does not grant the npm scope.
+2. Publish the first version once by hand, because trusted publishers can only be configured on an existing package. npm requires 2FA on the publishing account. From `mcp/`, set the `PROD_*` and `DEV_*` variables read by [scripts/build.mjs](../mcp/scripts/build.mjs), run `npm run build`, then:
+
+   ```bash
+   npm publish --access public --provenance=false --ignore-scripts --otp=<code>
+   ```
+
+   `--provenance=false` is needed because provenance only works from CI, and `--ignore-scripts` keeps `prepublishOnly` from rebuilding without the variables. With a passkey instead of an authenticator app, drop `--otp` and confirm in the browser.
+3. In the package settings on npmjs.com, add a trusted publisher for GitHub Actions: organization `lab4-kpis`, repository `kpis`, workflow `mcp-publish.yml`, no environment, with **Allow npm publish** checked.
+4. Under **Publishing access**, choose "Require two-factor authentication and disallow bypass 2fa tokens". Trusted publishing keeps working, and no stray token can publish.
 
 For each release:
 
@@ -237,11 +244,15 @@ Pinning the version in the manifests is deliberate: a new npm release never reac
 
 ## Pending validation
 
-Already verified against the development project, running from source: a real Google sign-in through both the CLI and the `login` tool in Claude Code, every tool with a real session, the server connecting in Claude Code and Codex, and installing the plugin from this repository's Codex marketplace.
+Already verified:
+
+- Against the development project, running from source: a real Google sign-in through both the CLI and the `login` tool in Claude Code, every tool with a real session, and the server connecting in Claude Code and Codex.
+- Installing the plugin from this repository's Codex marketplace.
+- The published package: `scripts/build.mjs` produced `0.1.0`, and `npx -y @lab4-kpis/mcp@0.1.0` runs from a clean cache.
 
 Still pending:
 
+- The publish workflow through trusted publishing. `0.1.0` was published by hand, so the workflow skips it; the first real run is the next version.
+- Installing the plugins from the marketplaces, which read `main`.
 - Whether the `login` tool can open the browser and listen on loopback from inside Codex's sandbox. If it cannot, the `npx ... login` command is the fallback.
 - Whether `codex plugin marketplace upgrade` is enough to pick up a new plugin version, or `codex plugin add` must be run again.
-- `scripts/build.mjs` and the publish workflow have not been run yet, so the published package itself is untested.
-- Availability of the `lab4-kpis` organization name on npm.
