@@ -218,18 +218,7 @@ The Supabase URL and publishable key of each environment are bundled into the pa
 
 The package is published as **public** on npm with [trusted publishing](https://docs.npmjs.com/trusted-publishers): GitHub Actions authenticates through OIDC and no npm token is stored in the repository. Installing it needs no account or token.
 
-One-time setup (done for `0.1.0`; kept for reference):
-
-1. Create the `lab4-kpis` organization on npmjs.com and add the repository maintainers as owners. Owning the GitHub organization does not grant the npm scope.
-2. Publish the first version once by hand, because trusted publishers can only be configured on an existing package. npm requires 2FA on the publishing account. From `mcp/`, set the `PROD_*` and `DEV_*` variables read by [scripts/build.mjs](../mcp/scripts/build.mjs), run `npm run build`, then:
-
-   ```bash
-   npm publish --access public --provenance=false --ignore-scripts --otp=<code>
-   ```
-
-   `--provenance=false` is needed because provenance only works from CI, and `--ignore-scripts` keeps `prepublishOnly` from rebuilding without the variables. With a passkey instead of an authenticator app, drop `--otp` and confirm in the browser.
-3. In the package settings on npmjs.com, add a trusted publisher for GitHub Actions: organization `lab4-kpis`, repository `kpis`, workflow `mcp-publish.yml`, no environment, with **Allow npm publish** checked.
-4. Under **Publishing access**, choose "Require two-factor authentication and disallow bypass 2fa tokens". Trusted publishing keeps working, and no stray token can publish.
+The [npm runbook](MCP_NPM_RUNBOOK.md) has the step-by-step procedures: adding owners, fixing the publish workflow, configuring the trusted publisher, publishing by hand, recovering lost access, moving to a new scope, and rebuilding everything from scratch.
 
 For each release:
 
