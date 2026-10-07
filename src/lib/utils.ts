@@ -39,6 +39,11 @@ export function displayDateToIso(value: string) {
   return Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== iso ? null : iso;
 }
 
+// Denominador del día: los KPIs activos del equipo, acotado a la regla de 5 a 10.
+export function kpiTarget(activeKpis: number) {
+  return Math.min(Math.max(activeKpis, 5), 10);
+}
+
 export function downloadCsv<T extends object>(filename: string, rows: T[]) {
   if (rows.length === 0) return;
   const headers = Object.keys(rows[0] ?? {});
