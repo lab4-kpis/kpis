@@ -1,6 +1,6 @@
 # MCP server for professors
 
-> **Status:** implemented, not yet published to npm. See [Pending validation](#pending-validation) for what has not been tested end to end.
+> **Status:** implemented and tested against the development project; not yet published to npm. See [Pending validation](#pending-validation) for what remains.
 
 A **read-only** MCP server for querying compliance, KPI catalogs, measurements, and audit activity from Claude Code or Codex, using the same Google identity and the same permissions as the portal. Teams keep reporting through the API; the MCP server never writes data.
 
@@ -237,9 +237,11 @@ Pinning the version in the manifests is deliberate: a new npm release never reac
 
 ## Pending validation
 
-- A real Google sign-in against Supabase. The loopback flow, PKCE URL, error callback, and session file permissions were tested against a stub project.
-- Starting the server inside a Codex session. Installing the plugin from this repository's marketplace was verified.
-- Whether `codex plugin marketplace upgrade` is enough to pick up a new plugin version, or `codex plugin add` must be run again.
+Already verified against the development project, running from source: a real Google sign-in through both the CLI and the `login` tool in Claude Code, every tool with a real session, the server connecting in Claude Code and Codex, and installing the plugin from this repository's Codex marketplace.
+
+Still pending:
+
 - Whether the `login` tool can open the browser and listen on loopback from inside Codex's sandbox. If it cannot, the `npx ... login` command is the fallback.
-- `scripts/build.mjs` and the publish workflow have not been run yet.
+- Whether `codex plugin marketplace upgrade` is enough to pick up a new plugin version, or `codex plugin add` must be run again.
+- `scripts/build.mjs` and the publish workflow have not been run yet, so the published package itself is untested.
 - Availability of the `lab4-kpis` organization name on npm.
