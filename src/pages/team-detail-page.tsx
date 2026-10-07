@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Clipboard, Download, Power, RefreshCw, ShieldX } from "lucide-react";
+import { ArrowLeft, Check, Clipboard, Download, MessageCircle, Power, RefreshCw, ShieldX } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ComplianceBadge } from "../components/compliance-badge";
@@ -11,11 +11,29 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { EmptyState, ErrorState, LoadingState } from "../components/ui/feedback";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { useAsyncData } from "../hooks/use-async-data";
+import { publicConfig } from "../lib/env";
 import { getSupabase } from "../lib/supabase";
 import { cn, downloadCsv, formatDate, formatDateTime } from "../lib/utils";
 import type { ComplianceRow, Environment, KpiCatalogRow, MeasurementRow, Project, ProjectApiKey } from "../types/models";
 
 type Tab = "catalog" | "measurements" | "history" | "keys";
+
+function whatsappKeyUrl(project: Project, env: Environment, key: string) {
+  const docsUrl = `${window.location.origin}${window.location.pathname}#/docs`;
+  const text = [
+    `Hola ${project.contact_name}! Esta es la clave ${env} de ${project.name} (equipo ${project.team_number}) para reportar KPIs.`,
+    "",
+    `PROJECT_KEY=${key}`,
+    `SUPABASE_URL=${publicConfig.supabaseUrl}`,
+    `SUPABASE_PUBLISHABLE_KEY=${publicConfig.publishableKey}`,
+    `ENV=${env}`,
+    "",
+    `Guía y ejemplos: ${docsUrl}`,
+    "",
+    "Guardala en el gestor de secretos, no la subas al repo. dev no cuenta para la nota; sólo prod suma.",
+  ].join("\n");
+  return `https://wa.me/${project.contact_phone}?text=${encodeURIComponent(text)}`;
+}
 
 async function loadProjectDetail(projectId: string) {
   const [projectResult, catalogResult, measurementResult, complianceResult, keysResult] = await Promise.all([
@@ -114,6 +132,11 @@ export function TeamDetailPage() {
           <DialogHeader><DialogTitle>Guardá esta clave ahora</DialogTitle><DialogDescription>Es la única vez que se muestra. La base conserva solamente su hash SHA-256.</DialogDescription></DialogHeader>
           <div className="rounded-md border bg-muted p-3"><p className="mb-1 text-xs font-medium uppercase text-muted-foreground">Ambiente {secret?.env}</p><code className="break-all font-mono text-sm">{secret?.value}</code></div>
           <Button onClick={() => void copySecret()}>{copied ? <Check className="size-4" /> : <Clipboard className="size-4" />}{copied ? "Copiada" : "Copiar clave"}</Button>
+          {secret && data.project.contact_phone ? (
+            <Button asChild variant="secondary">
+              <a href={whatsappKeyUrl(data.project, secret.env, secret.value)} target="_blank" rel="noreferrer"><MessageCircle className="size-4" />Enviar por WhatsApp a {data.project.contact_name}</a>
+            </Button>
+          ) : null}
         </DialogContent>
       </Dialog>
       <Dialog open={deactivatePending} onOpenChange={setDeactivatePending}>
