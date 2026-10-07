@@ -1,6 +1,10 @@
-# Reporte diario de KPIs — propuesta para el escenario 2 (equipos 9 a 16)
+# Reporte diario de KPIs - propuesta para el escenario 2 (equipos 9 a 16)
 
-**Estado: implementada.** La votación cerró el lunes 6/10 con la opción A. La plataforma está en el repo [`lab4-kpis/kpis`](https://github.com/lab4-kpis/kpis), con el portal docente en https://lab4-kpis.github.io/kpis/ y un MCP de sólo lectura para profesores. Presentación: jueves 9/10, 15 minutos, frente a todos los equipos y profesores, a cargo del equipo 14 (VaiVen). Este documento conserva el análisis que llevó a la decisión y está actualizado con lo que efectivamente se construyó. La guía operativa es el [instructivo para profesores](INSTRUCTIVO_PROFESORES.md).
+**Estado: implementada.** 
+
+Decidimos la arquitectura para la propuesta mediante una votación que cerró el lunes 6/10. La plataforma está en el repo `[lab4-kpis/kpis](https://github.com/lab4-kpis/kpis)`, con el portal docente en [https://lab4-kpis.github.io/kpis/](https://lab4-kpis.github.io/kpis/) y un MCP de sólo lectura para profesores. 
+
+Presentación: jueves 9/10, 15 minutos, frente a todos los equipos y profesores, a cargo del equipo 14 (VaiVen). Este documento conserva el análisis que llevó a la decisión y está actualizado con lo que efectivamente se construyó. La guía operativa es el [instructivo para profesores](INSTRUCTIVO_PROFESORES.md).
 
 ## 1. Qué nos piden
 
@@ -15,20 +19,24 @@ Cada proyecto reporta **todos los días entre 5 y 10 KPIs** a una plataforma cen
 5. **Nadie puede borrar datos, ni sin querer ni a propósito**, tampoco quien administra la plataforma. El dato de un día, una vez recibido, es inmutable y sobrevive a que alguien vacíe la tabla.
 6. **Sin sobreingeniería.** El volumen total es de unas 10.000 filas en todo el cuatrimestre. Cualquier capa que no sirva a los puntos 1, 2 o 5 sobra.
 
+
+
 ## 3. Las tres opciones
 
-||A · Base Postgres central (Supabase)|B · Archivo de datos en git (GitHub)|C · Google Sheets + Apps Script|
-|---|---|---|---|
-|Qué es|Un proyecto Supabase de la cátedra con tres tablas: proyectos, catálogo de KPIs y mediciones. Se escribe por la API REST que Supabase genera sola; no se despliega código|Cada equipo sube un archivo JSON por día a un repo; un workflow lo valida y compila un CSV consolidado. Es el patrón «datos en git» de Flat Data (GitHub) y del dataset diario de COVID de Johns Hopkins|Una planilla; cada equipo hace POST a un script que agrega filas|
-|Setup del profesor|Crear proyecto, pegar un SQL, cargar una fila por equipo. ~20 min|Crear repo, pegar dos workflows y un esquema, crear tokens. ~20 min más la auth|Crear planilla, pegar script, desplegar. ~15 min|
-|Integración por equipo|Script de ~50 líneas + cron. 3 a 5 h|Lo mismo más commit por API, un archivo por request. 4 a 6 h|Lo mismo con POST simple. 3 a 4 h|
-|Auth|Una clave por proyecto y ambiente, emitida desde el portal. Los profesores entran con Google contra una allowlist|Token de GitHub por equipo (vive en la cuenta de un alumno) o GitHub App (más pasos)|Un secreto en el script|
-|Consulta y análisis con IA|Portal docente con export CSV para cualquier IA, y MCP propio de sólo lectura para Claude Code y Codex|CSV en una URL pública; se pega o se sube a la IA|Descargar CSV y subirlo|
-|¿Están llegando?|Resumen diario del portal, sobre una vista con proyecto × día × KPIs válidos: es la nota del challenge|Página estática o CSV con conteos|Fórmula en una pestaña|
-|Validación|En el ingreso : un KPI fuera del catálogo o un valor mal tipado rebota con 400/409|Después del commit, en CI: el dato malo ya entró|Ninguna: los encabezados son el esquema|
-|Protección contra borrado|La tabla de mediciones es sólo de inserción : los proyectos no pueden actualizar ni borrar y un trigger frena el borrado desde el panel. La copia diaria en git queda como mejora posterior|Git con rama protegida es inmutable, salvo que un dueño borre el repo. Un espejo lo cubre|Cualquiera con edición borra filas; el historial de versiones es la única red|
-|Governance|SQL versionado en un repo con CHANGELOG y PRs|JSON Schema versionado en el mismo repo|Nadie controla la planilla|
-|Qué le van a objetar|«Free tier, ¿en la cuenta de quién?»|«Valida tarde, los tokens son de alumnos, consultar es abrir Excel»|«Es un formulario y muere con la cuenta del dueño»|
+
+|                            | A · Base Postgres central (Supabase)                                                                                                                                                        | B · Archivo de datos en git (GitHub)                                                                                                                                                                     | C · Google Sheets + Apps Script                                               |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Qué es                     | Un proyecto Supabase de la cátedra con tres tablas: proyectos, catálogo de KPIs y mediciones. Se escribe por la API REST que Supabase genera sola; no se despliega código                   | Cada equipo sube un archivo JSON por día a un repo; un workflow lo valida y compila un CSV consolidado. Es el patrón «datos en git» de Flat Data (GitHub) y del dataset diario de COVID de Johns Hopkins | Una planilla; cada equipo hace POST a un script que agrega filas              |
+| Setup del profesor         | Crear proyecto, pegar un SQL, cargar una fila por equipo. ~20 min                                                                                                                           | Crear repo, pegar dos workflows y un esquema, crear tokens. ~20 min más la auth                                                                                                                          | Crear planilla, pegar script, desplegar. ~15 min                              |
+| Integración por equipo     | Script de ~50 líneas + cron. 3 a 5 h                                                                                                                                                        | Lo mismo más commit por API, un archivo por request. 4 a 6 h                                                                                                                                             | Lo mismo con POST simple. 3 a 4 h                                             |
+| Auth                       | Una clave por proyecto y ambiente, emitida desde el portal. Los profesores entran con Google contra una allowlist                                                                           | Token de GitHub por equipo (vive en la cuenta de un alumno) o GitHub App (más pasos)                                                                                                                     | Un secreto en el script                                                       |
+| Consulta y análisis con IA | Portal docente con export CSV para cualquier IA, y MCP propio de sólo lectura para Claude Code y Codex                                                                                      | CSV en una URL pública; se pega o se sube a la IA                                                                                                                                                        | Descargar CSV y subirlo                                                       |
+| ¿Están llegando?           | Resumen diario del portal, sobre una vista con proyecto × día × KPIs válidos: es la nota del challenge                                                                                      | Página estática o CSV con conteos                                                                                                                                                                        | Fórmula en una pestaña                                                        |
+| Validación                 | En el ingreso : un KPI fuera del catálogo o un valor mal tipado rebota con 400/409                                                                                                          | Después del commit, en CI: el dato malo ya entró                                                                                                                                                         | Ninguna: los encabezados son el esquema                                       |
+| Protección contra borrado  | La tabla de mediciones es sólo de inserción : los proyectos no pueden actualizar ni borrar y un trigger frena el borrado desde el panel. La copia diaria en git queda como mejora posterior | Git con rama protegida es inmutable, salvo que un dueño borre el repo. Un espejo lo cubre                                                                                                                | Cualquiera con edición borra filas; el historial de versiones es la única red |
+| Governance                 | SQL versionado en un repo con CHANGELOG y PRs                                                                                                                                               | JSON Schema versionado en el mismo repo                                                                                                                                                                  | Nadie controla la planilla                                                    |
+| Qué le van a objetar       | «Free tier, ¿en la cuenta de quién?»                                                                                                                                                        | «Valida tarde, los tokens son de alumnos, consultar es abrir Excel»                                                                                                                                      | «Es un formulario y muere con la cuenta del dueño»                            |
+
 
 Descartadas antes de llegar acá, con el motivo verificado: BigQuery + Looker Studio (cuentas de servicio por equipo, el doble de integración y el sandbox expira toda tabla a los 60 días), Grafana Cloud (retiene métricas 14 días), Neon (Postgres sin API REST generada; restauración de 6 horas), Prometheus propio, Cloudflare Worker + D1, Airtable/NocoDB.
 
@@ -40,13 +48,15 @@ Descartadas antes de llegar acá, con el motivo verificado: BigQuery + Looker St
 
 **Segunda opción: B.** No tiene servidor y git es la auditoría. Es la base de la réplica diaria a CSV que queda como mejora posterior de A.
 
-|5. Contra Dataverse: dónde ganamos y dónde no||
-|---|---|
-|Dataverse gana en|Nosotros ganamos en|
-|Identidad y roles maduros (Entra ID); Power BI y Copilot si la facultad tiene licencias; está pago y adentro del tenant|Costo de integración : curl con una clave. En Dataverse cada equipo necesita un service principal que sólo un administrador del tenant de la facultad puede crear. ¿Quién registra 16 aplicaciones en el Entra de la universidad?|
-|MCP oficial de Microsoft, con endpoint remoto. Pero exige registrar una app en Entra ID, consentimiento de un administrador del tenant y habilitar el cliente en el Power Platform admin center; está documentado para Claude Desktop y Claude Code, no para Claude.ai ni ChatGPT|MCP propio de sólo lectura en Claude Code y Codex con la cuenta Google del portal, y CSV para cualquier otra IA. Sin registrar nada en ningún tenant|
-|Pausa a los 30 días sin uso|Portabilidad : Postgres, pg_dump, SQL universal|
-|Un administrador del sistema también puede borrar|Inmutabilidad por diseño: en Dataverse la protección es un rol; acá el borrado no existe para la API. El estándar se cambia por PR, no por una pantalla; el historial queda en git|
+
+| 5. Contra Dataverse: dónde ganamos y dónde no                                                                                                                                                                                                                                     |                                                                                                                                                                                                                                   |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dataverse gana en                                                                                                                                                                                                                                                                 | Nosotros ganamos en                                                                                                                                                                                                               |
+| Identidad y roles maduros (Entra ID); Power BI y Copilot si la facultad tiene licencias; está pago y adentro del tenant                                                                                                                                                           | Costo de integración : curl con una clave. En Dataverse cada equipo necesita un service principal que sólo un administrador del tenant de la facultad puede crear. ¿Quién registra 16 aplicaciones en el Entra de la universidad? |
+| MCP oficial de Microsoft, con endpoint remoto. Pero exige registrar una app en Entra ID, consentimiento de un administrador del tenant y habilitar el cliente en el Power Platform admin center; está documentado para Claude Desktop y Claude Code, no para Claude.ai ni ChatGPT | MCP propio de sólo lectura en Claude Code y Codex con la cuenta Google del portal, y CSV para cualquier otra IA. Sin registrar nada en ningún tenant                                                                              |
+| Pausa a los 30 días sin uso                                                                                                                                                                                                                                                       | Portabilidad : Postgres, pg_dump, SQL universal                                                                                                                                                                                   |
+| Un administrador del sistema también puede borrar                                                                                                                                                                                                                                 | Inmutabilidad por diseño: en Dataverse la protección es un rol; acá el borrado no existe para la API. El estándar se cambia por PR, no por una pantalla; el historial queda en git                                                |
+
 
 Si los profesores pesan «ya lo tenemos por Microsoft 365», van a elegir Dataverse y es una decisión razonable. Lo que compite no son los features: es que un alumno de Lab II se integra en una tarde, la demo corre en vivo y la guía entra en una carilla.
 
@@ -64,25 +74,31 @@ Profesor, en régimen **~15 min por semana**: abrir el panel el lunes, habilitar
 
 ## 7. Estado y próximos pasos
 
-|Cuándo|Qué|
-|---|---|
-|sáb 3/10|Sale este documento, la versión corta y la encuesta|
-|lun 6/10|Cierra la votación: opción A|
-|mar 7/10|Plataforma implementada en `lab4-kpis/kpis`: esquema Supabase, portal docente, contrato (OpenAPI, JSON Schema, ejemplos) y MCP para profesores. Ambientes de producción y desarrollo separados|
-|mié 8/10|Instructivo para profesores y slides. `dev` se mergea a `main` para publicar el plugin del MCP|
-|**jue 9/10**|**Presentación, 15 minutos, con demo en vivo.** Se entregan la presentación y el instructivo|
-|clase siguiente|ADR revisado de cada equipo sobre la arquitectura elegida|
+
+| Cuándo          | Qué                                                                                                                                                                                            |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| sáb 3/10        | Sale este documento, la versión corta y la encuesta                                                                                                                                            |
+| lun 6/10        | Cierra la votación: opción A                                                                                                                                                                   |
+| mar 7/10        | Plataforma implementada en `lab4-kpis/kpis`: esquema Supabase, portal docente, contrato (OpenAPI, JSON Schema, ejemplos) y MCP para profesores. Ambientes de producción y desarrollo separados |
+| mié 8/10        | Instructivo para profesores y slides. `dev` se mergea a `main` para publicar el plugin del MCP                                                                                                 |
+| **jue 9/10**    | **Presentación, 15 minutos, con demo en vivo.** Se entregan la presentación y el instructivo                                                                                                   |
+| clase siguiente | ADR revisado de cada equipo sobre la arquitectura elegida                                                                                                                                      |
+
 
 **Gane la que gane, lo que cada equipo tiene que hacer esta semana:** elegir sus 5 a 10 KPIs con nombre, tipo, fuente, frecuencia, unidad y justificación. Lo pide el ADR individual y no depende de la plataforma.
 
-|Tabla project|Forma larga: una fila por medición.|Anexo A — Contrato de datos Es el modelo de datos ordenados que usan OpenTelemetry y cualquier serie de tiempo: el esquema no cambia cuando un equipo agrega un KPI, y dieciséis proyectos con KPIs distintos caben en la misma tabla. La fuente de verdad es la migración SQL; no hay esquema paralelo. (la carga el profesor)|||
-|---|---|---|---|---|
-|Campo|Regla|||Práctica que lo respalda|
-|id team active Tabla|project_key|slug en kebab-case, lo asigna la cátedra (equipo-14-vaiven) número de equipo booleano; deshabilitar un equipo es ponerlo en falso (la emite el profesor, una por proyecto y ambiente)||OpenTelemetry resource attributes|
-|Campo||Regla||Práctica que lo respalda|
-|project_id, env key_hash revoked_at Tabla|kpi_catalog|a qué proyecto y ambiente pertenece hash SHA-256 de la clave; el texto plano se muestra una sola vez al emitirla y no se guarda fecha de revocación; rotar es emitir una nueva y revocar la anterior (una fila por KPI de cada proyecto; la inserta el propio equipo)||OWASP: claves guardadas hasheadas|
-|Campo||Regla||Práctica que lo respalda|
-|project_id, id id kind unit description deprecated_at|Vocabulario común recomendado ultima_ejecucion_antiguedad|clave primaria compuesta : dos equipos pueden tener latencia_p95 sin chocar, y un equipo no puede reportar el KPI de otro snake_case, sin la unidad en el nombre (latencia_p95, no latencia_ms) business / technical / health UCUM: ms, s, %, 1, y {publicacion}, {request} para conteos una línea de semántica: qué significa, cómo se calcula y cómo se agrega en el tiempo (se suma, se promedia) fecha de retiro, nula si vigente Cada equipo inserta y edita sus propias filas por la API (descripción y fecha de retiro); nunca las borra. para que «qué equipo tuvo más errores» tenga respuesta: errores_5xx (technical, {request}), latencia_p95 (technical, ms), api_alcanzable (health, 1), (health, s). Vienen como ejemplo en el repo del contrato.||OpenMetrics · OpenTelemetry naming consigna de la cátedra OpenTelemetry semantic conventions OpenTelemetry: la semántica va en metadata política de deprecación con fecha|
+
+| Tabla project                                         | Forma larga: una fila por medición.                       | Anexo A — Contrato de datos Es el modelo de datos ordenados que usan OpenTelemetry y cualquier serie de tiempo: el esquema no cambia cuando un equipo agrega un KPI, y dieciséis proyectos con KPIs distintos caben en la misma tabla. La fuente de verdad es la migración SQL; no hay esquema paralelo. (la carga el profesor)                                                                                                                                                                                                                                                                                                                                                                                                                                  |     |                                                                                                                                                                           |
+| ----------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Campo                                                 | Regla                                                     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |     | Práctica que lo respalda                                                                                                                                                  |
+| id team active Tabla                                  | project_key                                               | slug en kebab-case, lo asigna la cátedra (equipo-14-vaiven) número de equipo booleano; deshabilitar un equipo es ponerlo en falso (la emite el profesor, una por proyecto y ambiente)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |     | OpenTelemetry resource attributes                                                                                                                                         |
+| Campo                                                 |                                                           | Regla                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |     | Práctica que lo respalda                                                                                                                                                  |
+| project_id, env key_hash revoked_at Tabla             | kpi_catalog                                               | a qué proyecto y ambiente pertenece hash SHA-256 de la clave; el texto plano se muestra una sola vez al emitirla y no se guarda fecha de revocación; rotar es emitir una nueva y revocar la anterior (una fila por KPI de cada proyecto; la inserta el propio equipo)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |     | OWASP: claves guardadas hasheadas                                                                                                                                         |
+| Campo                                                 |                                                           | Regla                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |     | Práctica que lo respalda                                                                                                                                                  |
+| project_id, id id kind unit description deprecated_at | Vocabulario común recomendado ultima_ejecucion_antiguedad | clave primaria compuesta : dos equipos pueden tener latencia_p95 sin chocar, y un equipo no puede reportar el KPI de otro snake_case, sin la unidad en el nombre (latencia_p95, no latencia_ms) business / technical / health UCUM: ms, s, %, 1, y {publicacion}, {request} para conteos una línea de semántica: qué significa, cómo se calcula y cómo se agrega en el tiempo (se suma, se promedia) fecha de retiro, nula si vigente Cada equipo inserta y edita sus propias filas por la API (descripción y fecha de retiro); nunca las borra. para que «qué equipo tuvo más errores» tenga respuesta: errores_5xx (technical, {request}), latencia_p95 (technical, ms), api_alcanzable (health, 1), (health, s). Vienen como ejemplo en el repo del contrato. |     | OpenMetrics · OpenTelemetry naming consigna de la cátedra OpenTelemetry semantic conventions OpenTelemetry: la semántica va en metadata política de deprecación con fecha |
+
+
+
 
 ### Tabla measurement (la escriben los proyectos)
 
@@ -90,17 +106,19 @@ Profesor, en régimen **~15 min por semana**: abrir el panel el lunes, habilitar
 
 project_id **lo pone el servidor**, no el cliente: un valor por defecto que lo PostgREST request.headers · deduce de la clave del header; la política RLS rechaza RLS WITH CHECK
 
-|deduce de la clave del header; la política RLS rechaza||RLS|
-|---|---|---|
-|cualquier fila cuyo proyecto no coincida|||
-|FK compuesta (project_id, día calendario medido, en|||
-|/ qa|/ prod|OpenTelemetry resource|
-|numérico no nulo||OpenMetrics gauge|
-|UUID generado por la corrida; identifica la ejecución||RFC 9562 · CloudEvents id|
-|lo pone el servidor, UTC. La nota se cuenta por este campo, no por date||CloudEvents time|
-|UNIQUE: un valor por KPI, día y ambiente. Reenviar no||Idempotency-Key (IETF) como|
-|duplica ni modifica: el primer valor recibido queda. Un valor mal enviado no se corrige; la nota cuenta presencia, no||regla;|
-|exactitud||como mecanismo|
+
+| deduce de la clave del header; la política RLS rechaza                                                                |        | RLS                         |
+| --------------------------------------------------------------------------------------------------------------------- | ------ | --------------------------- |
+| cualquier fila cuyo proyecto no coincida                                                                              |        |                             |
+| FK compuesta (project_id, día calendario medido, en                                                                   |        |                             |
+| / qa                                                                                                                  | / prod | OpenTelemetry resource      |
+| numérico no nulo                                                                                                      |        | OpenMetrics gauge           |
+| UUID generado por la corrida; identifica la ejecución                                                                 |        | RFC 9562 · CloudEvents id   |
+| lo pone el servidor, UTC. La nota se cuenta por este campo, no por date                                               |        | CloudEvents time            |
+| UNIQUE: un valor por KPI, día y ambiente. Reenviar no                                                                 |        | Idempotency-Key (IETF) como |
+| duplica ni modifica: el primer valor recibido queda. Un valor mal enviado no se corrige; la nota cuenta presencia, no |        | regla;                      |
+| exactitud                                                                                                             |        | como mecanismo              |
+
 
 kpi_id kpi_id) al catálogo
 
@@ -120,7 +138,7 @@ reported_at
 
 ### Cómo se envía
 
-POST https://<proyecto>.supabase.co/rest/v1/measurement?on_conflict=project_id,kpi_id,date,env apikey: <clave pública del proyecto Supabase, la misma para todos> X-Project-Key: <clave secreta del equipo> Prefer: resolution=ignore-duplicates Content-Type: application/json
+POST https://.supabase.co/rest/v1/measurement?on_conflict=project_id,kpi_id,date,env apikey: <clave pública del proyecto Supabase, la misma para todos> X-Project-Key:  Prefer: resolution=ignore-duplicates Content-Type: application/json
 
 [ {"kpi_id": "publicaciones_activas", "date": "2026-10-09", "env": "prod", "value": 42, "run_id": "0192..."}, {"kpi_id": "latencia_p95", "date": "2026-10-09", "env": "prod", "value": 830, "run_id": "0192..."}, {"kpi_id": "api_alcanzable", "date": "2026-10-09", "env": "prod", "value": 1, "run_id": "0192..."}]
 
@@ -128,13 +146,15 @@ La clave del equipo va en un header propio y no en Authorization, porque PostgRE
 
 ### Qué clave tiene quién
 
-|Clave|Quién la tiene|Dónde vive|
-|---|---|---|
-|Clave pública del proyecto Supabase|todos: va en cada reporter, en el portal y en el MCP|en la configuración pública del portal; viaja en el mensaje de WhatsApp con la clave del equipo|
-|Clave de proyecto (X- Project-Key)|un equipo, por ambiente (`dev` para probar, `prod` para la nota)|en el gestor de secretos del equipo; se muestra una vez al emitirla y se envía por WhatsApp al referente del equipo|
-|Sesión Google del profesor|cada profesor habilitado en la allowlist|en el navegador (portal) y en un archivo local `0600` (MCP)|
-|service_role|nadie la usa|no sale del panel de Supabase|
-|Contraseña de la base|los profesores|no sale del panel|
+
+| Clave                               | Quién la tiene                                                   | Dónde vive                                                                                                          |
+| ----------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Clave pública del proyecto Supabase | todos: va en cada reporter, en el portal y en el MCP             | en la configuración pública del portal; viaja en el mensaje de WhatsApp con la clave del equipo                     |
+| Clave de proyecto (X- Project-Key)  | un equipo, por ambiente (`dev` para probar, `prod` para la nota) | en el gestor de secretos del equipo; se muestra una vez al emitirla y se envía por WhatsApp al referente del equipo |
+| Sesión Google del profesor          | cada profesor habilitado en la allowlist                         | en el navegador (portal) y en un archivo local `0600` (MCP)                                                         |
+| service_role                        | nadie la usa                                                     | no sale del panel de Supabase                                                                                       |
+| Contraseña de la base               | los profesores                                                   | no sale del panel                                                                                                   |
+
 
 **Emitir una clave** es un botón del portal que llama a una función del servidor con proyecto y ambiente; devuelve el texto plano una vez, guarda sólo el hash y ofrece mandarla por WhatsApp al referente del equipo. **Rotar** es emitir una nueva y revocar la anterior. **Deshabilitar un equipo** es poner active en falso, y no se revierte.
 
@@ -158,8 +178,10 @@ El rol que usan los proyectos tiene permiso de INSERT sobre measurement y nada m
 8. **Un KPI nuevo lo da de alta el propio equipo por la API**, insertando la fila en su catálogo. No hay PR ni despliegue; el profesor lo ve aparecer en la tabla. Un KPI no se renombra: se le pone fecha de retiro y se crea otro; su historia queda.
 9. **Una clave por proyecto y ambiente.** La emite y la rota el profesor con una llamada a la función; se muestra una vez. Un equipo que filtró su clave pide una nueva.
 10. **Copias que el administrador no controla.** *Diferido: en esta entrega sólo rige (c); (a) y (b) están descritas en [FUTURE_BACKUP.md](../FUTURE_BACKUP.md).* (a) Un workflow del repo del contrato exporta cada día las mediciones a data/AAAA-MM-DD.csv en una **rama data separada**, protegida sólo contra force push y borrado, porque la rama principal exige revisiones y un workflow no las tiene. (b) **Espejo, no fork**: un fork depende del original y GitHub borra los forks de un repo privado al borrarlo; un espejo es un repo propio en otra organización que el dueño del central no puede tocar. El equipo 14 mantiene uno ( vaiven- austral/kpi-replica) con un workflow de cinco líneas y un token de sólo lectura; cualquier equipo que quiera hace otro. (c) Cada reporter guarda lo que envió en su propia base, porque una foto como «publicaciones activas el 9/10» no se recalcula después. Si la base y el repo central desaparecen juntos, se restaura del último CSV con un COPY y los equipos reenvían el día que falte.
-
 11. **Retirar la plataforma o el estándar es un MAJOR** con las mismas reglas: PR, dos aprobaciones y ventana de objeción. No se apaga por decisión de una persona.
+
+
+
 ## Anexo C — Qué se verificó
 
 Verificado en documentación oficial el 3/10: el plan gratuito de Supabase no incluye backups y su rol *Read-only* es de plan Team; la pausa por inactividad no aplica con inserciones diarias; PostgREST rechaza una clave propia en Authorization y la lee bien desde un header propio; en una organización gratuita de GitHub, protección de ramas, revisiones, CODEOWNERS y Pages son sólo para repos públicos; Dataverse tiene endpoint MCP remoto pero exige app en Entra ID y consentimiento del administrador del tenant.
