@@ -149,7 +149,7 @@ isOneToOne: false
           Views: {
             "v_compliance": {
                   Row: {
-                    "business_kpis": number | null,"health_kpis": number | null,"project_id": string | null,"project_key": string | null,"project_name": string | null,"report_date": string | null,"score": number | null,"status": string | null,"team_number": number | null,"technical_kpis": number | null,"valid_kpis": number | null
+                    "business_kpis": number | null,"expected_kpis": number | null,"health_kpis": number | null,"project_id": string | null,"project_key": string | null,"project_name": string | null,"report_date": string | null,"score": number | null,"status": string | null,"team_number": number | null,"technical_kpis": number | null,"valid_kpis": number | null
                   }
                   Relationships: [
 

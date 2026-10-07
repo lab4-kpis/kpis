@@ -9,7 +9,7 @@ Guardá `PROJECT_KEY` en el gestor de secretos de tu plataforma. No la escribas 
 
 ## 1. Registrar el catálogo
 
-Antes de reportar, crear entre 5 y 10 KPIs. El mínimo no bloquea técnicamente el catálogo, pero menos de 5 queda incompleto para la consigna.
+Antes de reportar, crear entre 5 y 10 KPIs. El mínimo no bloquea técnicamente el catálogo. Un día cuenta como completo sólo si reportan todos los KPIs activos de su catálogo; con menos de 5 KPIs se exigen igual 5, así que nunca llegan a completo.
 
 ```bash
 curl --fail-with-body \

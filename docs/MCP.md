@@ -121,7 +121,7 @@ Dates use `YYYY-MM-DD`, like the API. Days are computed in `America/Argentina/Bu
 The server sends these rules to the agent as instructions; they match `v_compliance`:
 
 - Only `prod` measurements count, grouped by **reception** date, not by the declared date.
-- `complete` from 5 distinct KPIs in a day, `incomplete` with 1 to 4, `missing` with 0. The score is the number of KPIs, capped at 10.
+- `complete` when the team reports every KPI active in its catalog that day (`expected_kpis`, bounded to 5..10), `incomplete` with fewer, `missing` with 0. The score is the number of KPIs, capped at 10.
 - Only the configured weekdays inside the reporting period are evaluated, never future days.
 
 ### Examples

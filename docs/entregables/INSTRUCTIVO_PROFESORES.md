@@ -2,7 +2,7 @@
 
 La plataforma recibe todos los días entre 5 y 10 KPIs de cada equipo y los muestra en un portal. Esta guía cubre lo necesario para operarla sin depender de quienes la construimos.
 
-**Portal:** https://lab4-kpis.github.io/kpis/
+**Portal:** [https://lab4-kpis.github.io/kpis/](https://lab4-kpis.github.io/kpis/)
 
 ## Checklist de arranque
 
@@ -13,12 +13,13 @@ La plataforma recibe todos los días entre 5 y 10 KPIs de cada equipo y los mues
 - [ ] 5. El primer día del período, revisar el **Resumen diario**.
 - [ ] 6. *(Opcional)* Conectar el MCP a Claude Code o Codex.
 
+
+
 ## 1. Acceso al portal
 
 1. Mandar al grupo de WhatsApp de Lab IV:
-   - **una cuenta Gmail por cada profesor** que necesite entrar al panel, a la que tenga acceso;
-   - de **un profesor** que vaya a quedar como owner de la plataforma, su **usuario de GitHub** (ver paso 2).
-
+  - **una cuenta Gmail por cada profesor** que necesite entrar al panel, a la que tenga acceso;
+  - de **un profesor** que vaya a quedar como owner de la plataforma, su **usuario de GitHub** (ver paso 2).
    Nosotros habilitamos los Gmails y mandamos las invitaciones de owner.
 2. Entrar al portal con **Continuar con Google**, usando esa cuenta. No hay usuario ni contraseña propios.
 
@@ -26,15 +27,19 @@ La plataforma recibe todos los días entre 5 y 10 KPIs de cada equipo y los mues
 
 > 📄 **[PDF: Ingresar al portal y sumar un profesor]**
 
+
+
 ## 2. Tomar control de la plataforma
 
 El profesor que mandó su usuario de GitHub en el paso 1 queda como **owner** de las tres piezas. Sólo tiene que aceptar las invitaciones que le llegan:
 
-| Pieza | Qué contiene | Invitación |
-|---|---|---|
-| Organización de GitHub `lab4-kpis` | Código, portal, contrato de datos, historial de cambios | Owner de la organización |
-| Proyecto Supabase | Base de datos, autenticación, claves | Owner de la organización de Supabase, al Gmail del paso 1 |
-| Paquete npm `@lab4-kpis/mcp` *(opcional)* | MCP para profesores | Ver [MCP_NPM_RUNBOOK.md](../MCP_NPM_RUNBOOK.md) |
+
+| Pieza                                     | Qué contiene                                            | Invitación                                                |
+| ----------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------- |
+| Organización de GitHub `lab4-kpis`        | Código, portal, contrato de datos, historial de cambios | Owner de la organización                                  |
+| Proyecto Supabase                         | Base de datos, autenticación, claves                    | Owner de la organización de Supabase, al Gmail del paso 1 |
+| Paquete npm `@lab4-kpis/mcp` *(opcional)* | MCP para profesores                                     | Ver [MCP_NPM_RUNBOOK.md](../MCP_NPM_RUNBOOK.md)           |
+
 
 Con esto, la cátedra puede rehacer todo desde cero siguiendo [SETUP.md](../SETUP.md), sin pedirnos nada.
 
@@ -50,11 +55,11 @@ Sólo se evalúan los días marcados dentro del período, en hora de Argentina y
 
 ## 4. Habilitar un equipo
 
-Los 16 equipos ya están cargados, cada uno con su referente. Los equipos ya tienen su clave `dev` y prueban contra el ambiente de testing, que no cuenta para la nota. El profesor sólo emite la clave **`prod`**, que es la que suma. Para cada equipo:
+Los 16 equipos ya están cargados, cada uno con su referente. Los equipos ya tienen su clave `dev` y prueban contra el ambiente de testing, que no cuenta para la nota. El profesor sólo emite la clave `prod`, que es la que suma. Para cada equipo:
 
 1. Ir a **Equipos**, abrir el equipo y entrar en la pestaña **Claves**.
-2. Elegir **`prod`** y pulsar **Emitir o rotar**.
-3. En la ventana que se abre, pulsar **Enviar por WhatsApp a {referente}**. Se abre WhatsApp con un mensaje listo que trae la clave y todo lo que el equipo necesita para integrarse. Enviarlo.
+2. Elegir `prod` y pulsar **Emitir o rotar**.
+3. En la ventana que se abre, pulsar **Enviar por WhatsApp a PM**. Se abre WhatsApp con un mensaje listo que trae la clave y todo lo que el equipo necesita para integrarse. Enviarlo.
 
 - La clave se ve **una sola vez**. Si el equipo la pierde o la filtra, pulsar **Emitir o rotar** de nuevo: se emite una clave nueva y la anterior deja de funcionar en el mismo momento.
 - **Equipo nuevo:** en **Equipos → Nuevo equipo**, cargar número, nombre e identificador (`equipo-17-nombre`). Un equipo nuevo no tiene referente cargado, así que no aparece el botón de WhatsApp: copiar la clave y mandarla por mensaje privado.
@@ -62,17 +67,21 @@ Los 16 equipos ya están cargados, cada uno con su referente. Los equipos ya tie
 
 > 📄 **[PDF: Emitir una clave y enviarla por WhatsApp]**
 
+
+
 ## 5. Validar que los datos llegan
 
 **Resumen diario** es la pantalla principal. Arriba aparecen los equipos **sin reporte** y, para cada equipo, cuántos KPIs válidos llegaron ese día:
 
-| Estado | Regla |
-|---|---|
-| Completo | 5 o más KPIs distintos |
-| Incompleto | De 1 a 4 KPIs |
-| Sin reporte | Ningún KPI |
 
-El puntaje del día es la cantidad de KPIs válidos, con un tope de 10. Esa es la nota del challenge. Sólo cuenta `prod`, y cada KPI se asigna al día en que se **recibió**.
+| Estado      | Regla                                |
+| ----------- | ------------------------------------ |
+| Completo    | Todos los KPIs que propuso el equipo |
+| Incompleto  | Al menos uno, pero no todos          |
+| Sin reporte | Ningún KPI                           |
+
+
+"Todos los KPIs que propuso" son los activos en su catálogo ese día, contando como mínimo 5 y como máximo 10: un equipo con 8 KPIs se mide contra 8 (se ve `6/8`), uno con 3 contra 5. El puntaje del día es la cantidad de KPIs válidos, con un tope de 10. Esa es la nota del challenge. Sólo cuenta `prod`, y cada KPI se asigna al día en que se **recibió**.
 
 Todo lo que se ve es válido: la base rechaza en el momento cualquier KPI que no esté en el catálogo del equipo o que tenga un valor mal formado. Lo recibido no se puede editar ni borrar.
 
@@ -82,6 +91,8 @@ Para ver un equipo en detalle, abrirlo desde **Equipos**:
 - **Mediciones:** cada valor recibido, con fecha y ambiente.
 
 > 📄 **[PDF: Revisar el cumplimiento diario]**
+
+
 
 ## 6. Consultar y analizar los KPIs
 
@@ -111,6 +122,8 @@ Para cerrar sesión: *"cerrá sesión en Lab4 KPIs"*. El detalle técnico y la r
 
 > 📄 **[PDF: Instalar el MCP y hacer la primera consulta]**
 
+
+
 ## 7. Incorporar o modificar métricas
 
 **Los KPIs de cada equipo** los administra el propio equipo por la API, como explica la [guía de equipos](../TEAM_GUIDE.md). No hace falta un PR ni que intervenga un profesor:
@@ -133,12 +146,15 @@ Las reglas completas están en el Anexo B de [PROPUESTA.md](PROPUESTA.md).
 
 ## Si algo falla
 
-| Síntoma | Qué hacer |
-|---|---|
-| No puedo entrar al portal | Revisar que la cuenta esté activa en **Configuración → Profesores** (otro profesor la puede activar) y que el ingreso sea con Google. |
-| Un equipo recibe `403` | La clave es inválida o fue revocada. Emitir una nueva en **Claves** y enviarla. |
-| Un equipo recibe `401` | Está usando la clave de un ambiente con otro. Por ejemplo, la clave `dev` con `"env":"prod"`. |
-| Un equipo recibe `409` | Reporta un KPI que no está en su catálogo. Tiene que darlo de alta primero. |
-| Un equipo reportó pero no aparece | Revisar en **Mediciones** si lo mandó en `dev`, que no cuenta, o en un día no evaluable. |
-| No puedo emitir claves `prod` | Falta guardar el período en **Configuración**. |
-| El MCP dice "not an enabled professor" | La cuenta no está activa en **Configuración → Profesores**. |
+
+| Síntoma                                | Qué hacer                                                                                                                             |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| No puedo entrar al portal              | Revisar que la cuenta esté activa en **Configuración → Profesores** (otro profesor la puede activar) y que el ingreso sea con Google. |
+| Un equipo recibe `403`                 | La clave es inválida o fue revocada. Emitir una nueva en **Claves** y enviarla.                                                       |
+| Un equipo recibe `401`                 | Está usando la clave de un ambiente con otro. Por ejemplo, la clave `dev` con `"env":"prod"`.                                         |
+| Un equipo recibe `409`                 | Reporta un KPI que no está en su catálogo. Tiene que darlo de alta primero.                                                           |
+| Un equipo reportó pero no aparece      | Revisar en **Mediciones** si lo mandó en `dev`, que no cuenta, o en un día no evaluable.                                              |
+| No puedo emitir claves `prod`          | Falta guardar el período en **Configuración**.                                                                                        |
+| El MCP dice "not an enabled professor" | La cuenta no está activa en **Configuración → Profesores**.                                                                           |
+
+

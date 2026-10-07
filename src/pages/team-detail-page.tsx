@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { useAsyncData } from "../hooks/use-async-data";
 import { publicConfig } from "../lib/env";
 import { getSupabase } from "../lib/supabase";
-import { cn, downloadCsv, formatDate, formatDateTime, kpiTarget } from "../lib/utils";
+import { cn, downloadCsv, formatDate, formatDateTime } from "../lib/utils";
 import type { ComplianceRow, Environment, KpiCatalogRow, MeasurementRow, Project, ProjectApiKey } from "../types/models";
 
 type Tab = "catalog" | "measurements" | "history" | "keys";
@@ -59,7 +59,7 @@ export function TeamDetailPage() {
   const { data, loading, error, reload } = useAsyncData(() => loadProjectDetail(projectId), projectId);
   const [tab, setTab] = useState<Tab>("catalog");
   const [secret, setSecret] = useState<{ value: string; prefix: string; env: Environment } | null>(null);
-  const [keyEnv, setKeyEnv] = useState<Environment>("dev");
+  const [keyEnv, setKeyEnv] = useState<Environment>("prod");
   const [actionError, setActionError] = useState<string | null>(null);
   const [issuing, setIssuing] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -122,7 +122,7 @@ export function TeamDetailPage() {
 
       {tab === "catalog" ? <CatalogTab rows={data.catalog} activeCount={activeCatalog.length} /> : null}
       {tab === "measurements" ? <MeasurementsTab rows={data.measurements} projectKey={data.project.project_key} /> : null}
-      {tab === "history" ? <HistoryTab rows={data.compliance} projectKey={data.project.project_key} target={kpiTarget(activeCatalog.length)} /> : null}
+      {tab === "history" ? <HistoryTab rows={data.compliance} projectKey={data.project.project_key} /> : null}
       {tab === "keys" ? (
         <KeysTab rows={data.keys} active={data.project.active} env={keyEnv} setEnv={setKeyEnv} issuing={issuing} issue={issueKey} revoke={revokeKey} />
       ) : null}
@@ -167,9 +167,9 @@ function MeasurementsTab({ rows, projectKey }: { rows: MeasurementRow[]; project
   return <><div className="mb-3 flex justify-end"><Button variant="secondary" onClick={() => downloadCsv(`mediciones-${projectKey}.csv`, rows)}><Download className="size-4" />Exportar CSV</Button></div><TableShell><TableHead><tr><Th>Recepción</Th><Th>Fecha medida</Th><Th>KPI</Th><Th>Ambiente</Th><Th>Valor</Th><Th>Run ID</Th></tr></TableHead><TableBody>{rows.map((row) => <TableRow key={`${row.kpi_id}-${row.date}-${row.env}`}><Td>{formatDateTime(row.reported_at)}</Td><Td>{formatDate(row.date)}</Td><Td><code className="font-mono text-xs">{row.kpi_id}</code></Td><Td><Badge variant={row.env === "prod" ? "success" : "neutral"}>{row.env}</Badge></Td><Td><span className="font-mono">{row.value}</span> <span className="text-xs text-muted-foreground">{row.unit}</span></Td><Td><code className="font-mono text-xs text-muted-foreground">{row.run_id.slice(0, 8)}…</code></Td></TableRow>)}</TableBody></TableShell></>;
 }
 
-function HistoryTab({ rows, projectKey, target }: { rows: ComplianceRow[]; projectKey: string; target: number }) {
+function HistoryTab({ rows, projectKey }: { rows: ComplianceRow[]; projectKey: string }) {
   if (!rows.length) return <EmptyState title="Sin días evaluados" description="El historial comienza con el calendario global." />;
-  return <><div className="mb-3 flex justify-end"><Button variant="secondary" onClick={() => downloadCsv(`cumplimiento-${projectKey}.csv`, rows)}><Download className="size-4" />Exportar CSV</Button></div><TableShell><TableHead><tr><Th>Día</Th><Th>Estado</Th><Th>Total</Th><Th>Business</Th><Th>Technical</Th><Th>Health</Th></tr></TableHead><TableBody>{rows.map((row) => <TableRow key={row.report_date}><Td>{formatDate(row.report_date)}</Td><Td><ComplianceBadge status={row.status} /></Td><Td className="font-mono">{row.valid_kpis}/{target}</Td><Td>{row.business_kpis}</Td><Td>{row.technical_kpis}</Td><Td>{row.health_kpis}</Td></TableRow>)}</TableBody></TableShell></>;
+  return <><div className="mb-3 flex justify-end"><Button variant="secondary" onClick={() => downloadCsv(`cumplimiento-${projectKey}.csv`, rows)}><Download className="size-4" />Exportar CSV</Button></div><TableShell><TableHead><tr><Th>Día</Th><Th>Estado</Th><Th>Total</Th><Th>Business</Th><Th>Technical</Th><Th>Health</Th></tr></TableHead><TableBody>{rows.map((row) => <TableRow key={row.report_date}><Td>{formatDate(row.report_date)}</Td><Td><ComplianceBadge status={row.status} /></Td><Td className="font-mono">{row.valid_kpis}/{row.expected_kpis}</Td><Td>{row.business_kpis}</Td><Td>{row.technical_kpis}</Td><Td>{row.health_kpis}</Td></TableRow>)}</TableBody></TableShell></>;
 }
 
 function KeysTab({ rows, active, env, setEnv, issuing, issue, revoke }: { rows: ProjectApiKey[]; active: boolean; env: Environment; setEnv: (env: Environment) => void; issuing: boolean; issue: () => Promise<void>; revoke: (id: string) => Promise<void> }) {
@@ -191,7 +191,7 @@ function KeysTab({ rows, active, env, setEnv, issuing, issue, revoke }: { rows: 
       </div>
     </CardHeader>
     <CardContent>
-      {!rows.length ? <EmptyState title="No hay claves emitidas" description="Empezá por dev. Producción exige un calendario configurado." /> : <TableShell><TableHead><tr><Th>Ambiente</Th><Th>Prefijo</Th><Th>Emitida</Th><Th>Último uso</Th><Th>Estado</Th><Th /></tr></TableHead><TableBody>{rows.map((row) => <TableRow key={row.id}><Td><Badge variant={row.env === "prod" ? "success" : "neutral"}>{row.env}</Badge></Td><Td><code className="font-mono text-xs">{row.key_prefix}…</code></Td><Td>{formatDateTime(row.created_at)}</Td><Td>{formatDateTime(row.last_used_at)}</Td><Td>{row.revoked_at ? <Badge>Revocada</Badge> : <Badge variant="success">Activa</Badge>}</Td><Td>{!row.revoked_at ? <Button variant="ghost" size="sm" onClick={() => setPendingKeyId(row.id)}><ShieldX className="size-4" />Revocar</Button> : null}</Td></TableRow>)}</TableBody></TableShell>}
+      {!rows.length ? <EmptyState title="No hay claves emitidas" description="Emití la clave prod. Requiere el período configurado en Configuración." /> : <TableShell><TableHead><tr><Th>Ambiente</Th><Th>Prefijo</Th><Th>Emitida</Th><Th>Último uso</Th><Th>Estado</Th><Th /></tr></TableHead><TableBody>{rows.map((row) => <TableRow key={row.id}><Td><Badge variant={row.env === "prod" ? "success" : "neutral"}>{row.env}</Badge></Td><Td><code className="font-mono text-xs">{row.key_prefix}…</code></Td><Td>{formatDateTime(row.created_at)}</Td><Td>{formatDateTime(row.last_used_at)}</Td><Td>{row.revoked_at ? <Badge>Revocada</Badge> : <Badge variant="success">Activa</Badge>}</Td><Td>{!row.revoked_at ? <Button variant="ghost" size="sm" onClick={() => setPendingKeyId(row.id)}><ShieldX className="size-4" />Revocar</Button> : null}</Td></TableRow>)}</TableBody></TableShell>}
       <p className="mt-3 text-xs text-muted-foreground">{activeKeys.length} {activeKeys.length === 1 ? "clave activa" : "claves activas"}. El texto completo nunca se vuelve a mostrar.</p>
     </CardContent>
     <Dialog open={pendingKeyId !== null} onOpenChange={(open) => { if (!open) setPendingKeyId(null); }}><DialogContent><DialogHeader><DialogTitle>Revocar clave</DialogTitle><DialogDescription>La integración que usa esta clave dejará de reportar inmediatamente.</DialogDescription></DialogHeader><div className="flex justify-end gap-2"><Button variant="secondary" onClick={() => setPendingKeyId(null)}>Cancelar</Button><Button variant="danger" onClick={() => void confirmAction()}>Confirmar</Button></div></DialogContent></Dialog>
