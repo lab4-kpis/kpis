@@ -6,6 +6,7 @@
 - Portal: el catálogo del equipo muestra el ambiente y el conteo de activos es el de `prod`.
 - MCP `0.1.3`: `team_catalog` acepta `env` (por defecto `prod`) y `list_teams` cuenta KPIs activos de `prod`.
 - **Panel público de cumplimiento** en `#/cumplimiento`, sin login: estado del último día y matriz del período por equipo. `v_public_compliance` expone a `anon` sólo agregados (equipo, día, KPIs reportados/esperados, por tipo, estado y puntaje) mediante una función `security definer`; `anon` sigue sin leer tablas ni `v_compliance`. Migración `202610080002`.
+- **Mi equipo** en `#/mi-equipo`: cada equipo entra con su `PROJECT_KEY` y ve su catálogo, sus mediciones por día de recepción y su cumplimiento. La clave lee sólo las mediciones de su proyecto y ambiente (`GET /measurement`), y `rpc/current_project` identifica equipo y ambiente. La clave queda en `sessionStorage`. Migración `202610080003`.
 
 ## 0.1.1 - 2026-10-07
 
