@@ -1,6 +1,6 @@
 # Setup técnico de la plataforma
 
-Para quien mantiene o reconstruye la plataforma. Los profesores no necesitan esto: ver el [instructivo para profesores](entregables/INSTRUCTIVO_PROFESORES.md).
+Para quien mantiene o reconstruye la plataforma. Para el uso diario alcanza con el [instructivo para profesores](entregables/INSTRUCTIVO_PROFESORES.md), que también resume estos pasos.
 
 La instalación mantiene las credenciales personales fuera del repositorio. Requiere Node LTS, acceso al proyecto Supabase y este checkout.
 

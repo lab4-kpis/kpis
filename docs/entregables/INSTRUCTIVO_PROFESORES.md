@@ -15,23 +15,19 @@ La plataforma recibe todos los días entre 5 y 10 KPIs de cada equipo y los mues
 
 Las capturas de esta guía son del portal de desarrollo, con correos reemplazados por ejemplos.
 
-
-
 ## 1. Acceso al portal
 
 1. Mandar al grupo de WhatsApp de Lab IV:
   - **una cuenta Gmail por cada profesor** que necesite entrar al panel, a la que tenga acceso;
-  - de **un profesor** que vaya a quedar como owner de la plataforma, su **usuario de GitHub** (ver paso 2).
-   Nosotros habilitamos los Gmails y mandamos las invitaciones de owner.
+  - de **un profesor** que vaya a quedar como owner de la plataforma, su **usuario de GitHub** (ver sección 2).
+   Nosotros (alumnos de Lab IV) habilitamos los Gmails y mandamos las invitaciones de owner.
 2. Entrar al portal con **Continuar con Google**, usando esa cuenta. No hay usuario ni contraseña propios.
 
-**Sumar o quitar a otro profesor:** ir a **Configuración → Profesores → Agregar** y cargar su correo. No se manda ninguna invitación, así que hay que avisarle que ya puede entrar. Para quitar el acceso, desactivarlo desde la misma lista. El último profesor activo no se puede desactivar.
+**Sumar o quitar a otro profesor:** ir a **Configuración → Profesores → Agregar** y cargar su correo. No se manda ninguna invitación, así que hay que avisarle que ya puede entrar. Para quitar el acceso, desactivarlo desde la misma lista; para devolvérselo, volver a agregar su correo. El último profesor activo no se puede desactivar.
 
 ![Configuración: calendario de evaluación, profesores habilitados y actividad reciente](img/configuracion.jpg)
 
 ![Agregar profesor: sólo se carga el correo; no se envía invitación](img/agregar-profesor.jpg)
-
-
 
 ## 2. Tomar control de la plataforma
 
@@ -45,7 +41,18 @@ El profesor que mandó su usuario de GitHub en el paso 1 queda como **owner** de
 | Paquete npm `@lab4-kpis/mcp` *(opcional)* | MCP para profesores                                     | Ver [MCP_NPM_RUNBOOK.md](../MCP_NPM_RUNBOOK.md)           |
 
 
-Con esto, la cátedra puede rehacer todo desde cero siguiendo [SETUP.md](../SETUP.md), sin pedirnos nada.
+Con esto, la cátedra puede rehacer todo desde cero sin pedirnos nada.
+
+### Para rehacer la plataforma desde cero
+
+Sólo hace falta si se pierde el proyecto Supabase o se quiere montar otro. Los comandos exactos están en [SETUP.md](../SETUP.md):
+
+1. **Crear un proyecto en [Supabase](https://supabase.com/dashboard)** y clonar el repo `lab4-kpis/kpis`.
+2. **Crear las estructuras:** con `npm run db:push` se aplican las migraciones de `supabase/migrations/`, que crean tablas, reglas de acceso y los 16 equipos. Con `npm run db:bootstrap-admin` se da de alta al primer profesor.
+3. **Configurar la autenticación:** crear un cliente OAuth en Google, cargarlo en **Supabase → Authentication → Providers → Google** y habilitar el hook que bloquea a quien no sea profesor habilitado.
+4. **Publicar el portal** en GitHub Pages con la clave pública del nuevo proyecto.
+
+Después se sigue desde la sección 3 de esta guía.
 
 ## 3. Configurar el período
 
@@ -71,8 +78,6 @@ Los 16 equipos ya están cargados, cada uno con su referente. Los equipos ya tie
 
 ![Pestaña Claves de un equipo: elegir el ambiente y pulsar Emitir o rotar](img/claves-equipo.jpg)
 
-
-
 ## 5. Validar que los datos llegan
 
 **Resumen diario** es la pantalla principal. Arriba aparecen los equipos **sin reporte** y, para cada equipo, cuántos KPIs válidos llegaron ese día:
@@ -85,7 +90,7 @@ Los 16 equipos ya están cargados, cada uno con su referente. Los equipos ya tie
 | Sin reporte | Ningún KPI                           |
 
 
-"Todos los KPIs que propuso" son los activos en su catálogo ese día, contando como mínimo 5 y como máximo 10: un equipo con 8 KPIs se mide contra 8 (se ve `6/8`), uno con 3 contra 5. El puntaje del día es la cantidad de KPIs válidos, con un tope de 10. Esa es la nota del challenge. Sólo cuenta `prod`, y cada KPI se asigna al día en que se **recibió**.
+"Todos los KPIs que propuso" son los activos en su catálogo ese día, contando como mínimo 5 y como máximo 10: un equipo con 8 KPIs se mide contra 8 (se ve `6/8`), uno con 3 contra 5. El puntaje del día es la cantidad de KPIs válidos, con un tope de 10. La **nota del challenge** es el promedio de esos puntajes sobre los días evaluados: se ve en la columna **Promedio** del [panel público de cumplimiento](https://lab4-kpis.github.io/kpis/#/cumplimiento), y el MCP la devuelve como `average_score` (sección 6). Sólo cuenta `prod`, y cada KPI se asigna al día en que se **recibió**.
 
 Todo lo que se ve es válido: la base rechaza en el momento cualquier KPI que no esté en el catálogo del equipo o que tenga un valor mal formado. Lo recibido no se puede editar ni borrar.
 
@@ -126,9 +131,6 @@ Después, pedirle al agente *"iniciá sesión en Lab4 KPIs"* y entrar con Google
 
 Para cerrar sesión: *"cerrá sesión en Lab4 KPIs"*. El detalle técnico y la resolución de problemas están en [MCP.md](../MCP.md).
 
-
-
-
 ## 7. Incorporar o modificar métricas
 
 **Los KPIs de cada equipo** los administra el propio equipo por la API, como explica la [guía de equipos](../TEAM_GUIDE.md). No hace falta un PR ni que intervenga un profesor:
@@ -156,32 +158,34 @@ Las reglas completas están en el Anexo B de [PROPUESTA.md](PROPUESTA.md).
 
 Un PR aprobado se mergea primero en `dev` y después en `main`. Cada pieza se publica de una forma distinta:
 
-| Pieza | Cómo se publica | Cómo se comprueba |
-| --- | --- | --- |
-| Portal | **Solo.** Cada merge a `dev` o `main` lo reconstruye en un par de minutos | En la pestaña **Actions** del repo, *Deploy portal to GitHub Pages* en verde |
-| MCP | **Solo**, si el PR toca `mcp/` o `plugins/` y llega a `main` | *Publish MCP package* en verde. Cada profesor actualiza con `claude plugin marketplace update lab4-kpis` y `claude plugin update lab4-kpis@lab4-kpis`, o en Codex con `codex plugin marketplace upgrade` |
-| Base de datos | **A mano.** Un merge no toca la base | Ver los pasos de abajo |
 
-**Si el PR trae archivos nuevos en `supabase/migrations/`:**
+| Pieza         | Cómo se publica                                                           | Cómo se comprueba                                                                                                                                                                                        |
+| ------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Portal        | **Solo.** Cada merge a `dev` o `main` lo reconstruye en un par de minutos | En la pestaña **Actions** del repo, *Deploy portal to GitHub Pages* en verde                                                                                                                             |
+| MCP           | **Solo**, si el PR toca `mcp/` o `plugins/` y llega a `main`              | *Publish MCP package* en verde. Cada profesor actualiza con `claude plugin marketplace update lab4-kpis` y `claude plugin update lab4-kpis@lab4-kpis`, o en Codex con `codex plugin marketplace upgrade` |
+| Base de datos | **A mano.** Un merge no toca la base                                      | Ver los pasos de abajo                                                                                                                                                                                   |
+
+
+**Si el PR trae archivos nuevos en** `supabase/migrations/`**:**
 
 1. **Primero en desarrollo.** En [Supabase](https://supabase.com/dashboard), abrir el proyecto `lab4-kpis-dev` → **SQL Editor** → **New query**, pegar el archivo completo y pulsar **Run**. Si hay más de un archivo, ir en orden de nombre.
 2. **Comprobar en el portal de desarrollo** (`/kpis/dev/`) que la pantalla que cambió el PR funciona.
-3. **Después en producción**, igual que en el paso 1 pero en el proyecto de producción, **antes de mergear a `main`**. El portal nuevo espera la base nueva: si se mergea primero, sus pantallas fallan hasta que se aplica la migración.
+3. **Después en producción**, igual que en el paso 1 pero en el proyecto de producción, **antes de mergear a** `main`. El portal nuevo espera la base nueva: si se mergea primero, sus pantallas fallan hasta que se aplica la migración.
 
 Hay que usar siempre el mismo camino. Si las migraciones se aplican desde el SQL Editor, avisarle al mantenedor que las aplicó así, porque `npm run db:push` no las ve como hechas e intentaría repetirlas.
 
 ## Si algo falla
 
 
-| Síntoma                                | Qué hacer                                                                                                                             |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| No puedo entrar al portal              | Revisar que la cuenta esté activa en **Configuración → Profesores** (otro profesor la puede activar) y que el ingreso sea con Google. |
-| Un equipo recibe `403`                 | La clave es inválida o fue revocada. Emitir una nueva en **Claves** y enviarla.                                                       |
-| Un equipo recibe `401`                 | Está usando la clave de un ambiente con otro. Por ejemplo, la clave `dev` con `"env":"prod"`.                                         |
-| Un equipo recibe `409`                 | Reporta un KPI que no está en el catálogo de ese ambiente. Tiene que darlo de alta primero con la clave de ese ambiente.                                                           |
-| Un equipo reportó pero no aparece      | Revisar en **Mediciones** si lo mandó en `dev`, que no cuenta, o en un día no evaluable.                                              |
-| No puedo emitir claves `prod`          | Falta guardar el período en **Configuración**.                                                                                        |
-| Una pantalla del portal falla después de un merge | Falta aplicar la migración del PR en esa base. Ver la sección 8. |
-| El MCP dice "not an enabled professor" | La cuenta no está activa en **Configuración → Profesores**.                                                                           |
+| Síntoma                                           | Qué hacer                                                                                                                                                      |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No puedo entrar al portal                         | Revisar que la cuenta esté activa en **Configuración → Profesores** (otro profesor la reactiva volviendo a agregar el correo) y que el ingreso sea con Google. |
+| Un equipo recibe `403`                            | La clave es inválida o fue revocada. Emitir una nueva en **Claves** y enviarla.                                                                                |
+| Un equipo recibe `401`                            | Está usando la clave de un ambiente con otro. Por ejemplo, la clave `dev` con `"env":"prod"`.                                                                  |
+| Un equipo recibe `409`                            | Reporta un KPI que no está en el catálogo de ese ambiente. Tiene que darlo de alta primero con la clave de ese ambiente.                                       |
+| Un equipo reportó pero no aparece                 | Revisar en **Mediciones** si lo mandó en `dev`, que no cuenta, o en un día no evaluable.                                                                       |
+| No puedo emitir claves `prod`                     | Falta guardar el período en **Configuración**.                                                                                                                 |
+| Una pantalla del portal falla después de un merge | Falta aplicar la migración del PR en esa base. Ver la sección 8.                                                                                               |
+| El MCP dice "not an enabled professor"            | La cuenta no está activa en **Configuración → Profesores**.                                                                                                    |
 
 
