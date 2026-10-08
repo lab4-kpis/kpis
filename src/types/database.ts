@@ -177,7 +177,12 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "hook_restrict_admin_signup":
+            "current_project":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "env": Database["public"]['Enums']["reporting_environment"],"name": string,"project_key": string,"team_number": number
+            }[]
+                           },
+"hook_restrict_admin_signup":
 { Args: { "event": Json }; Returns: Json
                            },
 "is_current_user_admin":

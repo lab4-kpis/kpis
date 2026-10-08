@@ -32,7 +32,7 @@ Profesor ── Google OAuth ──> Portal Vite/GitHub Pages ── JWT ──>
 ## Módulos
 
 - Catálogo: autogestionado por cada equipo; alta y cambios limitados, sin borrado ni renombre.
-- Ingesta: mediciones numéricas e inmutables.
+- Ingesta: mediciones numéricas e inmutables. Cada clave lee sólo las mediciones de su proyecto y ambiente; `current_project()` dice a qué equipo y ambiente pertenece la clave.
 - Cumplimiento: calendario global y vistas enriquecidas. `v_public_compliance` expone a `anon` sólo los agregados por equipo y día (estado, KPIs reportados y esperados, puntaje) a través de una función `security definer`; sin ids, valores, catálogos, claves ni contactos.
 - Administración: equipos, claves, profesores y configuración.
 - Auditoría: cambios administrativos y de catálogo sin secretos.

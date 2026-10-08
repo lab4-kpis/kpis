@@ -7,6 +7,7 @@ import { publicConfig } from "./lib/env";
 import { DashboardPage } from "./pages/dashboard-page";
 import { LoginPage } from "./pages/login-page";
 import { PublicCompliancePage } from "./pages/public-compliance-page";
+import { TeamPage } from "./pages/team-page";
 import { SettingsPage } from "./pages/settings-page";
 import { TeamDetailPage } from "./pages/team-detail-page";
 import { TeamsPage } from "./pages/teams-page";
@@ -27,6 +28,7 @@ export function App() {
       <Route path="/docs" element={<Suspense fallback={<LoadingState label="Cargando documentación" />}><SwaggerPage /></Suspense>} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/cumplimiento" element={<PublicCompliancePage />} />
+      <Route path="/mi-equipo" element={<TeamPage />} />
       <Route element={<ProtectedApp />}>
         <Route element={<AppLayout />}>
           <Route index element={<DashboardPage />} />

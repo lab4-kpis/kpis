@@ -15,6 +15,36 @@ tags:
   - name: Measurements
     description: Mediciones inmutables
 paths:
+  /rest/v1/rpc/current_project:
+    post:
+      tags: [Catalog]
+      summary: Identificar la clave
+      description: Equipo y ambiente a los que pertenece la clave enviada. Vacío si la clave falta, es inválida o fue revocada.
+      security:
+        - SupabasePublishableKey: []
+          ProjectKey: []
+      parameters:
+        - $ref: '#/components/parameters/ContentJson'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, maxProperties: 0 }
+      responses:
+        '200':
+          description: Cero o una fila
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 1
+                items:
+                  type: object
+                  properties:
+                    team_number: { type: integer }
+                    project_key: { type: string }
+                    name: { type: string }
+                    env: { $ref: '#/components/schemas/Environment' }
   /rest/v1/kpi_catalog:
     get:
       tags: [Catalog]
@@ -95,6 +125,32 @@ paths:
         '401': { $ref: '#/components/responses/NotAllowed' }
         '403': { $ref: '#/components/responses/InvalidKey' }
   /rest/v1/measurement:
+    get:
+      tags: [Measurements]
+      summary: Listar las mediciones propias
+      description: Devuelve sólo las mediciones del equipo y del ambiente de la clave. Sin clave válida, la lista viene vacía.
+      security:
+        - SupabasePublishableKey: []
+          ProjectKey: []
+      parameters:
+        - $ref: '#/components/parameters/AcceptJson'
+        - name: order
+          in: query
+          schema: { type: string, default: reported_at.desc }
+      responses:
+        '200':
+          description: Mediciones aceptadas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/MeasurementWrite'
+                    - type: object
+                      required: [reported_at]
+                      properties:
+                        reported_at: { type: string, format: date-time, description: Recepción en el servidor; define el día que cuenta. }
     post:
       tags: [Measurements]
       summary: Reportar un lote diario
