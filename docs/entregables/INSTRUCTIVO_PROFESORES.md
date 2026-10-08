@@ -98,7 +98,7 @@ Para ver un equipo en detalle, abrirlo desde **Equipos**:
 
 ![Equipo → Cumplimiento: estado y KPIs reportados sobre esperados, día por día](img/cumplimiento-equipo.jpg)
 
-
+Los equipos ven su propio estado, y el de los demás, en el [panel público de cumplimiento](https://lab4-kpis.github.io/kpis/#/cumplimiento), sin login. Muestra el mismo estado y puntaje que el Resumen diario, sin valores de KPIs ni datos de contacto. Para ver sus propios valores, cada equipo entra a **Mi equipo** con su clave.
 
 ## 6. Consultar y analizar los KPIs
 
@@ -138,7 +138,7 @@ Para cerrar sesión: *"cerrá sesión en Lab4 KPIs"*. El detalle técnico y la r
 
 Cada equipo debe tener entre 5 y 10 KPIs activos. Para supervisarlo, el profesor tiene:
 
-- **Equipo → Catálogo:** KPIs activos y retirados, con tipo, unidad y definición.
+- **Equipo → Catálogo:** KPIs activos y retirados de cada ambiente, con tipo, unidad y definición. El conteo de activos es el de `prod`, que es el que se exige.
 
 ![Equipo → Catálogo: cada KPI con su tipo, unidad, agregación y estado](img/catalogo-equipo.jpg)
 
@@ -178,7 +178,7 @@ Hay que usar siempre el mismo camino. Si las migraciones se aplican desde el SQL
 | No puedo entrar al portal              | Revisar que la cuenta esté activa en **Configuración → Profesores** (otro profesor la puede activar) y que el ingreso sea con Google. |
 | Un equipo recibe `403`                 | La clave es inválida o fue revocada. Emitir una nueva en **Claves** y enviarla.                                                       |
 | Un equipo recibe `401`                 | Está usando la clave de un ambiente con otro. Por ejemplo, la clave `dev` con `"env":"prod"`.                                         |
-| Un equipo recibe `409`                 | Reporta un KPI que no está en su catálogo. Tiene que darlo de alta primero.                                                           |
+| Un equipo recibe `409`                 | Reporta un KPI que no está en el catálogo de ese ambiente. Tiene que darlo de alta primero con la clave de ese ambiente.                                                           |
 | Un equipo reportó pero no aparece      | Revisar en **Mediciones** si lo mandó en `dev`, que no cuenta, o en un día no evaluable.                                              |
 | No puedo emitir claves `prod`          | Falta guardar el período en **Configuración**.                                                                                        |
 | Una pantalla del portal falla después de un merge | Falta aplicar la migración del PR en esa base. Ver la sección 8. |

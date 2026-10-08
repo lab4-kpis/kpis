@@ -9,7 +9,7 @@ Guardá `PROJECT_KEY` en el gestor de secretos de tu plataforma. No la escribas 
 
 ## 1. Registrar el catálogo
 
-Antes de reportar, crear entre 5 y 10 KPIs. El mínimo no bloquea técnicamente el catálogo. Un día cuenta como completo sólo si reportan todos los KPIs activos de su catálogo; con menos de 5 KPIs se exigen igual 5, así que nunca llegan a completo.
+Antes de reportar, crear entre 5 y 10 KPIs. **El catálogo es por ambiente:** cada `PROJECT_KEY` registra y lee sólo el catálogo de su ambiente, así que probar con la clave `dev` no fija el de `prod`. Antes del primer envío a `prod` hay que registrar el catálogo con la clave `prod`; sólo ese cuenta para el cumplimiento. El mínimo no bloquea técnicamente el catálogo. Un día cuenta como completo sólo si reportan todos los KPIs activos de su catálogo; con menos de 5 KPIs se exigen igual 5, así que nunca llegan a completo.
 
 ```bash
 curl --fail-with-body \
@@ -52,6 +52,8 @@ Ejecutar una vez al día con el mecanismo existente del proyecto: cron propio, s
 3. enviarlo;
 4. fallar visiblemente ante un HTTP no exitoso;
 5. conservar una copia local de lo enviado.
+
+El estado diario de todos los equipos se ve sin login en el [panel público de cumplimiento](https://lab4-kpis.github.io/kpis/#/cumplimiento). Para ver los valores que recibió la plataforma, entrar a [Mi equipo](https://lab4-kpis.github.io/kpis/#/mi-equipo) con la `PROJECT_KEY`: muestra el catálogo, las mediciones por día de recepción y el cumplimiento. La clave va directo a Supabase y queda sólo en esa pestaña. Por API, `GET /rest/v1/measurement` con el header `X-Project-Key` devuelve las mediciones propias del ambiente de la clave.
 
 Sólo `prod` suma para cumplimiento. `dev` y `qa` permiten validar la integración sin afectar la nota.
 
