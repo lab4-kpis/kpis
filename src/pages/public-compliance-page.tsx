@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, KeyRound } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ComplianceBadge } from "../components/compliance-badge";
 import { TableBody, TableHead, TableRow, TableShell, Td, Th } from "../components/data-table";
@@ -40,7 +40,8 @@ export function PublicCompliancePage() {
     <main className="min-h-screen bg-white">
       <header className="sticky top-0 z-20 flex h-14 items-center gap-4 border-b bg-white px-4 sm:px-6">
         <Button asChild variant="secondary" size="sm"><Link to="/"><ArrowLeft className="size-4" />Portal</Link></Button>
-        <div><span className="font-semibold">Lab4 KPIs</span><span className="ml-2 text-sm text-muted-foreground">Cumplimiento público</span></div>
+        <div className="min-w-0 flex-1"><span className="font-semibold">Lab4 KPIs</span><span className="ml-2 text-sm text-muted-foreground">Cumplimiento público</span></div>
+        <Button asChild size="sm"><Link to="/mi-equipo"><KeyRound className="size-4" />Mi equipo</Link></Button>
       </header>
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         <p className="mb-6 max-w-3xl text-sm text-muted-foreground">

@@ -53,7 +53,7 @@ Ejecutar una vez al día con el mecanismo existente del proyecto: cron propio, s
 4. fallar visiblemente ante un HTTP no exitoso;
 5. conservar una copia local de lo enviado.
 
-El estado diario de todos los equipos se ve sin login en el [panel público de cumplimiento](https://lab4-kpis.github.io/kpis/#/cumplimiento).
+El estado diario de todos los equipos se ve sin login en el [panel público de cumplimiento](https://lab4-kpis.github.io/kpis/#/cumplimiento). Para ver los valores que recibió la plataforma, entrar a [Mi equipo](https://lab4-kpis.github.io/kpis/#/mi-equipo) con la `PROJECT_KEY`: muestra el catálogo, las mediciones por día de recepción y el cumplimiento. La clave va directo a Supabase y queda sólo en esa pestaña. Por API, `GET /rest/v1/measurement` con el header `X-Project-Key` devuelve las mediciones propias del ambiente de la clave.
 
 Sólo `prod` suma para cumplimiento. `dev` y `qa` permiten validar la integración sin afectar la nota.
 
