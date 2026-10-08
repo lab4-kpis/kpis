@@ -1,0 +1,36 @@
+name: SemVer check
+
+# Governance rule 3: a PR that touches supabase/migrations must carry the label
+# semver:minor or semver:major, and it must match what the migration text says
+# (scripts/semver-check.mjs). PRs without migrations pass without a label.
+# Runs on every PR (no paths filter) so it can be a required check.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  semver:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Test the classifier
+        run: node --test scripts/semver-check.test.mjs
+      - name: Classify migrations
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ' ') }}
+        run: |
+          label=$(printf '%s\n' $LABELS | grep '^semver:' | paste -sd, - || true)
+          # Migration file names never contain spaces.
+          node scripts/semver-check.mjs "$label" $(git diff --name-only --diff-filter=AMR "$BASE"...HEAD -- 'supabase/migrations/*.sql')
