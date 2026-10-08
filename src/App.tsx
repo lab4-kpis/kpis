@@ -6,6 +6,7 @@ import { useAuth } from "./contexts/auth-context";
 import { publicConfig } from "./lib/env";
 import { DashboardPage } from "./pages/dashboard-page";
 import { LoginPage } from "./pages/login-page";
+import { PublicCompliancePage } from "./pages/public-compliance-page";
 import { SettingsPage } from "./pages/settings-page";
 import { TeamDetailPage } from "./pages/team-detail-page";
 import { TeamsPage } from "./pages/teams-page";
@@ -25,6 +26,7 @@ export function App() {
     <Routes>
       <Route path="/docs" element={<Suspense fallback={<LoadingState label="Cargando documentación" />}><SwaggerPage /></Suspense>} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/cumplimiento" element={<PublicCompliancePage />} />
       <Route element={<ProtectedApp />}>
         <Route element={<AppLayout />}>
           <Route index element={<DashboardPage />} />

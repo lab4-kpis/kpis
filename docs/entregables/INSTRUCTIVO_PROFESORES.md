@@ -90,6 +90,8 @@ Para ver un equipo en detalle, abrirlo desde **Equipos**:
 - **Cumplimiento:** estado y puntaje día por día.
 - **Mediciones:** cada valor recibido, con fecha y ambiente.
 
+Los equipos ven su propio estado, y el de los demás, en el [panel público de cumplimiento](https://lab4-kpis.github.io/kpis/#/cumplimiento), sin login. Muestra el mismo estado y puntaje que el Resumen diario, sin valores de KPIs ni datos de contacto.
+
 > 📄 **[PDF: Revisar el cumplimiento diario]**
 
 
