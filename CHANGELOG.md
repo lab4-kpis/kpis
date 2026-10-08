@@ -1,5 +1,9 @@
 # Changelog
 
+## Sin publicar
+
+- **Panel público de cumplimiento** en `#/cumplimiento`, sin login: estado del último día y matriz del período por equipo. `v_public_compliance` expone a `anon` sólo agregados (equipo, día, KPIs reportados/esperados, por tipo, estado y puntaje) mediante una función `security definer`; `anon` sigue sin leer tablas ni `v_compliance`. Migración `202610080002`.
+
 ## 0.1.1 - 2026-10-07
 
 - Cumplimiento: un día es completo sólo si el equipo reporta todos los KPIs activos de su catálogo, acotado a 5..10. `v_compliance` expone `expected_kpis` y el portal muestra reportados/esperados. Migraciones `202610070001` y `202610070002`.
