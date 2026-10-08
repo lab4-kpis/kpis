@@ -49,13 +49,14 @@ Descartadas antes de llegar acá, con el motivo verificado: BigQuery + Looker St
 **Segunda opción: B.** No tiene servidor y git es la auditoría. Es la base de la réplica diaria a CSV que queda como mejora posterior de A.
 
 
-| 5. Contra Dataverse: dónde ganamos y dónde no                                                                                                                                                                                                                                     |                                                                                                                                                                                                                                   |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Dataverse gana en                                                                                                                                                                                                                                                                 | Nosotros ganamos en                                                                                                                                                                                                               |
-| Identidad y roles maduros (Entra ID); Power BI y Copilot si la facultad tiene licencias; está pago y adentro del tenant                                                                                                                                                           | Costo de integración : curl con una clave. En Dataverse cada equipo necesita un service principal que sólo un administrador del tenant de la facultad puede crear. ¿Quién registra 16 aplicaciones en el Entra de la universidad? |
-| MCP oficial de Microsoft, con endpoint remoto. Pero exige registrar una app en Entra ID, consentimiento de un administrador del tenant y habilitar el cliente en el Power Platform admin center; está documentado para Claude Desktop y Claude Code, no para Claude.ai ni ChatGPT | MCP propio de sólo lectura en Claude Code y Codex con la cuenta Google del portal, y CSV para cualquier otra IA. Sin registrar nada en ningún tenant                                                                              |
-| Pausa a los 30 días sin uso                                                                                                                                                                                                                                                       | Portabilidad : Postgres, pg_dump, SQL universal                                                                                                                                                                                   |
-| Un administrador del sistema también puede borrar                                                                                                                                                                                                                                 | Inmutabilidad por diseño: en Dataverse la protección es un rol; acá el borrado no existe para la API. El estándar se cambia por PR, no por una pantalla; el historial queda en git                                                |
+## 5. Contra Dataverse: dónde ganamos y dónde no
+
+| Dataverse gana en | Nosotros ganamos en |
+|---|---|
+| Identidad y roles maduros (Entra ID); Power BI y Copilot si la facultad tiene licencias; está pago y adentro del tenant | **Costo de integración:** curl con una clave. En Dataverse cada equipo necesita un service principal que sólo un administrador del tenant de la facultad puede crear. ¿Quién registra 16 aplicaciones en el Entra de la universidad? |
+| MCP oficial de Microsoft, con endpoint remoto. Pero exige registrar una app en Entra ID, consentimiento de un administrador del tenant y habilitar el cliente en el Power Platform admin center; está documentado para Claude Desktop y Claude Code, no para Claude.ai ni ChatGPT | MCP propio de sólo lectura en Claude Code y Codex con la cuenta Google del portal, y CSV para cualquier otra IA. Sin registrar nada en ningún tenant |
+| Pausa a los 30 días sin uso | **Portabilidad:** Postgres, pg_dump, SQL universal |
+| Un administrador del sistema también puede borrar | **Inmutabilidad por diseño:** en Dataverse la protección es un rol; acá el borrado no existe para la API. El estándar se cambia por PR, no por una pantalla; el historial queda en git |
 
 
 Si los profesores pesan «ya lo tenemos por Microsoft 365», van a elegir Dataverse y es una decisión razonable. Lo que compite no son los features: es que un alumno de Lab II se integra en una tarde, la demo corre en vivo y la guía entra en una carilla.
@@ -87,62 +88,76 @@ Profesor, en régimen **~15 min por semana**: abrir el panel el lunes, habilitar
 
 **Gane la que gane, lo que cada equipo tiene que hacer esta semana:** elegir sus 5 a 10 KPIs con nombre, tipo, fuente, frecuencia, unidad y justificación. Lo pide el ADR individual y no depende de la plataforma.
 
+## Anexo A — Contrato de datos
 
-| Tabla project                                         | Forma larga: una fila por medición.                       | Anexo A — Contrato de datos Es el modelo de datos ordenados que usan OpenTelemetry y cualquier serie de tiempo: el esquema no cambia cuando un equipo agrega un KPI, y dieciséis proyectos con KPIs distintos caben en la misma tabla. La fuente de verdad es la migración SQL; no hay esquema paralelo. (la carga el profesor)                                                                                                                                                                                                                                                                                                                                                                                                                                  |     |                                                                                                                                                                           |
-| ----------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Campo                                                 | Regla                                                     |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |     | Práctica que lo respalda                                                                                                                                                  |
-| id team active Tabla                                  | project_key                                               | slug en kebab-case, lo asigna la cátedra (equipo-14-vaiven) número de equipo booleano; deshabilitar un equipo es ponerlo en falso (la emite el profesor, una por proyecto y ambiente)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |     | OpenTelemetry resource attributes                                                                                                                                         |
-| Campo                                                 |                                                           | Regla                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |     | Práctica que lo respalda                                                                                                                                                  |
-| project_id, env key_hash revoked_at Tabla             | kpi_catalog                                               | a qué proyecto y ambiente pertenece hash SHA-256 de la clave; el texto plano se muestra una sola vez al emitirla y no se guarda fecha de revocación; rotar es emitir una nueva y revocar la anterior (una fila por KPI de cada proyecto; la inserta el propio equipo)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |     | OWASP: claves guardadas hasheadas                                                                                                                                         |
-| Campo                                                 |                                                           | Regla                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |     | Práctica que lo respalda                                                                                                                                                  |
-| project_id, id id kind unit description deprecated_at | Vocabulario común recomendado ultima_ejecucion_antiguedad | clave primaria compuesta : dos equipos pueden tener latencia_p95 sin chocar, y un equipo no puede reportar el KPI de otro snake_case, sin la unidad en el nombre (latencia_p95, no latencia_ms) business / technical / health UCUM: ms, s, %, 1, y {publicacion}, {request} para conteos una línea de semántica: qué significa, cómo se calcula y cómo se agrega en el tiempo (se suma, se promedia) fecha de retiro, nula si vigente Cada equipo inserta y edita sus propias filas por la API (descripción y fecha de retiro); nunca las borra. para que «qué equipo tuvo más errores» tenga respuesta: errores_5xx (technical, {request}), latencia_p95 (technical, ms), api_alcanzable (health, 1), (health, s). Vienen como ejemplo en el repo del contrato. |     | OpenMetrics · OpenTelemetry naming consigna de la cátedra OpenTelemetry semantic conventions OpenTelemetry: la semántica va en metadata política de deprecación con fecha |
+**Forma larga: una fila por medición.** Es el modelo de datos ordenados que usan OpenTelemetry y cualquier serie de tiempo: el esquema no cambia cuando un equipo agrega un KPI, y dieciséis proyectos con KPIs distintos caben en la misma tabla. La fuente de verdad es la migración SQL; no hay esquema paralelo.
 
+### Tabla `projects` (la carga el profesor)
 
+| Campo | Regla | Práctica que lo respalda |
+|---|---|---|
+| `id` | UUID interno | |
+| `project_key` | slug en `kebab-case`, lo asigna la cátedra (`equipo-14-vaiven`) | OpenTelemetry resource attributes |
+| `team_number`, `name` | número y nombre del equipo | |
+| `active`, `deactivated_at` | deshabilitar un equipo es ponerlo en falso; no se revierte y bloquea sus claves | |
 
+### Tabla `project_api_keys` (la emite el profesor, una activa por proyecto y ambiente)
 
-### Tabla measurement (la escriben los proyectos)
+| Campo | Regla | Práctica que lo respalda |
+|---|---|---|
+| `project_id`, `env` | a qué proyecto y ambiente pertenece | |
+| `key_hash` | hash SHA-256 de la clave; **el texto plano se muestra una sola vez** al emitirla y no se guarda | OWASP: claves guardadas hasheadas |
+| `key_prefix` | primeros caracteres, para reconocerla en el portal sin exponerla | |
+| `revoked_at` | fecha de revocación; rotar es emitir una nueva, que revoca la anterior | |
 
-**Campo Regla Práctica que lo respalda**
+### Tabla `kpi_catalog` (una fila por KPI de cada proyecto; la inserta el propio equipo)
 
-project_id **lo pone el servidor**, no el cliente: un valor por defecto que lo PostgREST request.headers · deduce de la clave del header; la política RLS rechaza RLS WITH CHECK
+| Campo | Regla | Práctica que lo respalda |
+|---|---|---|
+| `project_id`, `id` | **clave primaria compuesta**: dos equipos pueden tener `latencia_p95` sin chocar, y un equipo no puede reportar el KPI de otro | |
+| `id` | `snake_case`, sin la unidad en el nombre (`latencia_p95`, no `latencia_ms`) | OpenMetrics · OpenTelemetry naming |
+| `kind` | `business` / `technical` / `health` | consigna de la cátedra |
+| `unit` | UCUM: `ms`, `s`, `%`, `1`, y `{publicacion}`, `{request}` para conteos | OpenTelemetry semantic conventions |
+| `description` | una línea de semántica: qué significa, cómo se calcula y cómo se agrega en el tiempo (se suma, se promedia) | OpenTelemetry: la semántica va en metadata |
+| `name`, `source`, `aggregation`, `justification` | opcionales: nombre legible, de dónde sale el dato, cómo se agrega (`sum`, `avg`, `min`, `max`, `last`, `count`) y por qué se mide | consigna de la cátedra |
+| `deprecated_at` | fecha de retiro, nula si vigente | política de deprecación con fecha |
 
+Cada equipo inserta sus filas por la API y después sólo puede cambiar `description`, `aggregation` y `deprecated_at`; nunca las borra. Un proyecto tiene como máximo 10 KPIs activos. **Vocabulario común recomendado** para que «qué equipo tuvo más errores» tenga respuesta: `errores_5xx` (technical, `{request}`), `latencia_p95` (technical, `ms`), `api_alcanzable` (health, `1`), `ultima_ejecucion_antiguedad` (health, `s`). Vienen como ejemplo en el repo del contrato.
 
-| deduce de la clave del header; la política RLS rechaza                                                                |        | RLS                         |
-| --------------------------------------------------------------------------------------------------------------------- | ------ | --------------------------- |
-| cualquier fila cuyo proyecto no coincida                                                                              |        |                             |
-| FK compuesta (project_id, día calendario medido, en                                                                   |        |                             |
-| / qa                                                                                                                  | / prod | OpenTelemetry resource      |
-| numérico no nulo                                                                                                      |        | OpenMetrics gauge           |
-| UUID generado por la corrida; identifica la ejecución                                                                 |        | RFC 9562 · CloudEvents id   |
-| lo pone el servidor, UTC. La nota se cuenta por este campo, no por date                                               |        | CloudEvents time            |
-| UNIQUE: un valor por KPI, día y ambiente. Reenviar no                                                                 |        | Idempotency-Key (IETF) como |
-| duplica ni modifica: el primer valor recibido queda. Un valor mal enviado no se corrige; la nota cuenta presencia, no |        | regla;                      |
-| exactitud                                                                                                             |        | como mecanismo              |
+### Tabla `measurement` (la escriben los proyectos)
 
+| Campo | Regla | Práctica que lo respalda |
+|---|---|---|
+| `project_id` | **lo pone el servidor**, no el cliente: lo deduce de la clave del header; la política RLS rechaza cualquier fila cuyo proyecto no coincida | PostgREST `request.headers` · RLS `WITH CHECK` |
+| `kpi_id` | FK compuesta `(project_id, kpi_id)` al catálogo | |
+| `date` | **día calendario medido**, en `America/Argentina/Buenos_Aires`, nunca futuro | |
+| `env` | `dev` / `qa` / `prod`; tiene que coincidir con el ambiente de la clave | OpenTelemetry resource |
+| `value` | numérico no nulo | OpenMetrics gauge |
+| `run_id` | UUID generado por la corrida; identifica la ejecución | RFC 9562 · CloudEvents `id` |
+| `reported_at` | lo pone el servidor, UTC. **La nota se cuenta por este campo**, no por `date` | CloudEvents `time` |
+| `(project_id, kpi_id, date, env)` | **clave primaria**: un valor por KPI, día y ambiente. Reenviar no duplica ni modifica: el primer valor recibido queda. **Un valor mal enviado no se corrige**; la nota cuenta presencia, no exactitud | Idempotency-Key (IETF) como regla; `on_conflict` + `ignore-duplicates` de PostgREST como mecanismo |
 
-kpi_id kpi_id) al catálogo
+**Todo valor es un número.** Un KPI es una medición; un texto no es un KPI, es una etiqueta. Por eso `value` es numérico siempre, como en OpenMetrics y OpenTelemetry. Lo que parece texto se expresa en número: un estado de salud es 1 o 0; «última ejecución exitosa» es la antigüedad en segundos, la convención `*_timestamp_seconds` de Prometheus; una versión desplegada no es un KPI y no se reporta.
 
-date America/Argentina/Buenos_Aires, nunca futuro
-
-env dev
-
-value
-
-run_id
-
-reported_at
-
-(project_id, kpi_id, date, on_conflict + ignore- env) duplicates de PostgREST
-
-**Todo valor es un número.** Un KPI es una medición; un texto no es un KPI, es una etiqueta. Por eso value es numérico siempre, como en OpenMetrics y OpenTelemetry. Lo que parece texto se expresa en número: un estado de salud es 1 o 0; «última ejecución exitosa» es la antigüedad en segundos, la convención *_timestamp_seconds de Prometheus; una versión desplegada no es un KPI y no se reporta. **Por qué date no da nota.** Si la nota se contara por el día medido, un equipo podría mandar el cuatrimestre entero el último día. Se cuenta por el día en que la plataforma recibió la fila. Reenviar un día pasado completa la historia para el análisis, pero no suma a la nota.
+**Por qué `date` no da nota.** Si la nota se contara por el día medido, un equipo podría mandar el cuatrimestre entero el último día. Se cuenta por el día en que la plataforma recibió la fila. Reenviar un día pasado completa la historia para el análisis, pero no suma a la nota.
 
 ### Cómo se envía
 
-POST https://.supabase.co/rest/v1/measurement?on_conflict=project_id,kpi_id,date,env apikey: <clave pública del proyecto Supabase, la misma para todos> X-Project-Key:  Prefer: resolution=ignore-duplicates Content-Type: application/json
+```
+POST https://<proyecto>.supabase.co/rest/v1/measurement?on_conflict=project_id,kpi_id,date,env
+apikey: <clave pública del proyecto Supabase, la misma para todos>
+X-Project-Key: <clave secreta del equipo>
+Prefer: resolution=ignore-duplicates
+Content-Type: application/json
 
-[ {"kpi_id": "publicaciones_activas", "date": "2026-10-09", "env": "prod", "value": 42, "run_id": "0192..."}, {"kpi_id": "latencia_p95", "date": "2026-10-09", "env": "prod", "value": 830, "run_id": "0192..."}, {"kpi_id": "api_alcanzable", "date": "2026-10-09", "env": "prod", "value": 1, "run_id": "0192..."}]
+[
+  {"kpi_id": "publicaciones_activas", "date": "2026-10-09", "env": "prod", "value": 42,  "run_id": "0192..."},
+  {"kpi_id": "latencia_p95",          "date": "2026-10-09", "env": "prod", "value": 830, "run_id": "0192..."},
+  {"kpi_id": "api_alcanzable",        "date": "2026-10-09", "env": "prod", "value": 1,   "run_id": "0192..."}
+]
+```
 
-La clave del equipo va en un header propio y no en Authorization, porque PostgREST intenta leer ese header como un token JWT y rechazaría la clave. Un kpi_id que no está en el catálogo responde 409 con el detalle. Un env fuera del enum o una date futura responde 400. El mismo cuerpo reenviado responde 201 sin crear nada.
+La clave del equipo va en un header propio y no en `Authorization`, porque PostgREST intenta leer ese header como un token JWT y rechazaría la clave. Un `kpi_id` que no está en el catálogo responde 409 con el detalle. Un `env` fuera del enum o una `date` futura responde 400. El mismo cuerpo reenviado responde 201 sin crear nada.
 
 ### Qué clave tiene quién
 
@@ -150,7 +165,7 @@ La clave del equipo va en un header propio y no en Authorization, porque PostgRE
 | Clave                               | Quién la tiene                                                   | Dónde vive                                                                                                          |
 | ----------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | Clave pública del proyecto Supabase | todos: va en cada reporter, en el portal y en el MCP             | en la configuración pública del portal; viaja en el mensaje de WhatsApp con la clave del equipo                     |
-| Clave de proyecto (X- Project-Key)  | un equipo, por ambiente (`dev` para probar, `prod` para la nota) | en el gestor de secretos del equipo; se muestra una vez al emitirla y se envía por WhatsApp al referente del equipo |
+| Clave de proyecto (`X-Project-Key`)  | un equipo, por ambiente (`dev` para probar, `prod` para la nota) | en el gestor de secretos del equipo; se muestra una vez al emitirla y se envía por WhatsApp al referente del equipo |
 | Sesión Google del profesor          | cada profesor habilitado en la allowlist                         | en el navegador (portal) y en un archivo local `0600` (MCP)                                                         |
 | service_role                        | nadie la usa                                                     | no sale del panel de Supabase                                                                                       |
 | Contraseña de la base               | los profesores                                                   | no sale del panel                                                                                                   |
@@ -158,9 +173,9 @@ La clave del equipo va en un header propio y no en Authorization, porque PostgRE
 
 **Emitir una clave** es un botón del portal que llama a una función del servidor con proyecto y ambiente; devuelve el texto plano una vez, guarda sólo el hash y ofrece mandarla por WhatsApp al referente del equipo. **Rotar** es emitir una nueva y revocar la anterior. **Deshabilitar un equipo** es poner active en falso, y no se revierte.
 
-### Vista v_compliance y qué es un KPI válido
+### Vista `v_compliance` y qué es un KPI válido
 
-Proyecto × día de recepción × cantidad de KPIs válidos, con una columna por tipo (business, technical, health). Un KPI válido es una fila en prod, de un KPI del catálogo propio, recibida ese día; se cuenta cada KPI una vez por día y como máximo 10. Qué mezcla de tipos exige la cátedra lo decide la cátedra; la vista lo muestra, no lo impone. Es la nota del challenge y la respuesta a «¿están llegando los datos?».
+Proyecto × día de recepción × cantidad de KPIs válidos, con una columna por tipo (business, technical, health). Un KPI válido es una fila en `prod`, de un KPI del catálogo propio, recibida ese día; se cuenta cada KPI una vez por día y como máximo 10. **Un día es completo cuando llegan todos los KPIs activos del catálogo** (`expected_kpis`, como mínimo 5 y como máximo 10): un equipo con 8 KPIs se mide contra 8. Qué mezcla de tipos exige la cátedra lo decide la cátedra; la vista lo muestra, no lo impone. Es la nota del challenge y la respuesta a «¿están llegando los datos?».
 
 ### Sólo inserción y el acceso de los profesores
 
