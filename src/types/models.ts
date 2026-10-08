@@ -32,6 +32,7 @@ export interface ComplianceRow {
 
 export interface KpiCatalogRow {
   project_id: string;
+  env: Environment;
   id: string;
   kind: KpiKind;
   unit: string;
