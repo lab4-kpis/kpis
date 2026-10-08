@@ -26,7 +26,7 @@ type FormValues = z.infer<typeof schema>;
 async function loadTeams() {
   const [{ data: projects, error: projectsError }, { data: catalog, error: catalogError }] = await Promise.all([
     getSupabase().from("projects").select("*").order("team_number"),
-    getSupabase().from("kpi_catalog").select("project_id,deprecated_at"),
+    getSupabase().from("kpi_catalog").select("project_id,deprecated_at").eq("env", "prod"),
   ]);
   if (projectsError) throw projectsError;
   if (catalogError) throw catalogError;
