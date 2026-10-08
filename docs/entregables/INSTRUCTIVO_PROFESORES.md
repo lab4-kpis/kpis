@@ -133,7 +133,7 @@ Para cerrar sesión: *"cerrá sesión en Lab4 KPIs"*. El detalle técnico y la r
 
 Cada equipo debe tener entre 5 y 10 KPIs activos. Para supervisarlo, el profesor tiene:
 
-- **Equipo → Catálogo:** KPIs activos y retirados, con tipo, unidad y definición.
+- **Equipo → Catálogo:** KPIs activos y retirados de cada ambiente, con tipo, unidad y definición. El conteo de activos es el de `prod`, que es el que se exige.
 - **Configuración → Actividad reciente:** quién agregó o retiró qué, y cuándo.
 
 **El estándar** (un tipo de KPI nuevo, un campo, una regla) se cambia con un PR en `lab4-kpis/kpis`:
@@ -152,7 +152,7 @@ Las reglas completas están en el Anexo B de [PROPUESTA.md](PROPUESTA.md).
 | No puedo entrar al portal              | Revisar que la cuenta esté activa en **Configuración → Profesores** (otro profesor la puede activar) y que el ingreso sea con Google. |
 | Un equipo recibe `403`                 | La clave es inválida o fue revocada. Emitir una nueva en **Claves** y enviarla.                                                       |
 | Un equipo recibe `401`                 | Está usando la clave de un ambiente con otro. Por ejemplo, la clave `dev` con `"env":"prod"`.                                         |
-| Un equipo recibe `409`                 | Reporta un KPI que no está en su catálogo. Tiene que darlo de alta primero.                                                           |
+| Un equipo recibe `409`                 | Reporta un KPI que no está en el catálogo de ese ambiente. Tiene que darlo de alta primero con la clave de ese ambiente.                                                           |
 | Un equipo reportó pero no aparece      | Revisar en **Mediciones** si lo mandó en `dev`, que no cuenta, o en un día no evaluable.                                              |
 | No puedo emitir claves `prod`          | Falta guardar el período en **Configuración**.                                                                                        |
 | El MCP dice "not an enabled professor" | La cuenta no está activa en **Configuración → Profesores**.                                                                           |
