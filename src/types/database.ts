@@ -51,13 +51,13 @@ export type Database = {
                   ]
                 },"kpi_catalog": {
                   Row: {
-                    "aggregation": string | null,"created_at": string,"deprecated_at": string | null,"description": string,"frequency": string,"id": string,"justification": string | null,"kind": Database["public"]['Enums']["kpi_kind"],"name": string | null,"project_id": string,"source": string | null,"unit": string,"updated_at": string
+                    "aggregation": string | null,"created_at": string,"deprecated_at": string | null,"description": string,"env": Database["public"]['Enums']["reporting_environment"],"frequency": string,"id": string,"justification": string | null,"kind": Database["public"]['Enums']["kpi_kind"],"name": string | null,"project_id": string,"source": string | null,"unit": string,"updated_at": string
                   }
                   Insert: {
-                    "aggregation"?: string | null,"created_at"?: string,"deprecated_at"?: string | null,"description": string,"frequency"?: string,"id": string,"justification"?: string | null,"kind": Database["public"]['Enums']["kpi_kind"],"name"?: string | null,"project_id": string,"source"?: string | null,"unit": string,"updated_at"?: string
+                    "aggregation"?: string | null,"created_at"?: string,"deprecated_at"?: string | null,"description": string,"env"?: Database["public"]['Enums']["reporting_environment"],"frequency"?: string,"id": string,"justification"?: string | null,"kind": Database["public"]['Enums']["kpi_kind"],"name"?: string | null,"project_id": string,"source"?: string | null,"unit": string,"updated_at"?: string
                   }
                   Update: {
-                    "aggregation"?: string | null,"created_at"?: string,"deprecated_at"?: string | null,"description"?: string,"frequency"?: string,"id"?: string,"justification"?: string | null,"kind"?: Database["public"]['Enums']["kpi_kind"],"name"?: string | null,"project_id"?: string,"source"?: string | null,"unit"?: string,"updated_at"?: string
+                    "aggregation"?: string | null,"created_at"?: string,"deprecated_at"?: string | null,"description"?: string,"env"?: Database["public"]['Enums']["reporting_environment"],"frequency"?: string,"id"?: string,"justification"?: string | null,"kind"?: Database["public"]['Enums']["kpi_kind"],"name"?: string | null,"project_id"?: string,"source"?: string | null,"unit"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -86,11 +86,11 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
-      foreignKeyName: "measurement_project_id_kpi_id_fkey"
-      columns: ["project_id","kpi_id"]
+      foreignKeyName: "measurement_project_id_env_kpi_id_fkey"
+      columns: ["project_id","env","kpi_id"]
 isOneToOne: false
       referencedRelation: "kpi_catalog"
-      referencedColumns: ["project_id","id"]
+      referencedColumns: ["project_id","env","id"]
     }
                   ]
                 },"project_api_keys": {
@@ -167,11 +167,11 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
-      foreignKeyName: "measurement_project_id_kpi_id_fkey"
-      columns: ["project_id","kpi_id"]
+      foreignKeyName: "measurement_project_id_env_kpi_id_fkey"
+      columns: ["project_id","env","kpi_id"]
 isOneToOne: false
       referencedRelation: "kpi_catalog"
-      referencedColumns: ["project_id","id"]
+      referencedColumns: ["project_id","env","id"]
     }
                   ]
                 }
