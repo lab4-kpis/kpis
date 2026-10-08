@@ -34,6 +34,7 @@ export type PublicComplianceRow = Pick<ComplianceRow, "team_number" | "project_n
 
 export interface KpiCatalogRow {
   project_id: string;
+  env: Environment;
   id: string;
   kind: KpiKind;
   unit: string;

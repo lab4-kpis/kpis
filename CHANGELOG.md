@@ -2,6 +2,9 @@
 
 ## Sin publicar
 
+- **Catálogo por ambiente.** `kpi_catalog` suma `env` a su clave primaria `(project_id, env, id)`, como claves y mediciones. Cada clave registra y lee sólo el catálogo de su ambiente: probar con `dev` ya no fija el catálogo de `prod`. Una medición sólo acepta KPIs del catálogo de su ambiente y `v_compliance` cuenta `expected_kpis` sobre el de `prod`. Las filas existentes quedan en `prod` y, si el proyecto ya había enviado mediciones en otro ambiente, se copian a ese ambiente. Migración `202610080001`.
+- Portal: el catálogo del equipo muestra el ambiente y el conteo de activos es el de `prod`.
+- MCP `0.1.3`: `team_catalog` acepta `env` (por defecto `prod`) y `list_teams` cuenta KPIs activos de `prod`.
 - **Panel público de cumplimiento** en `#/cumplimiento`, sin login: estado del último día y matriz del período por equipo. `v_public_compliance` expone a `anon` sólo agregados (equipo, día, KPIs reportados/esperados, por tipo, estado y puntaje) mediante una función `security definer`; `anon` sigue sin leer tablas ni `v_compliance`. Migración `202610080002`.
 
 ## 0.1.1 - 2026-10-07
