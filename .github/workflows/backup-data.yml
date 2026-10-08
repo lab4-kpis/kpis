@@ -5,17 +5,31 @@ name: Daily data backup
 # closed day changed in the database. 06:17 in Buenos Aires: the day before is
 # closed with margin, and minute 17 avoids the top-of-hour cron queue.
 # Needs the secret KPI_BACKUP_DB_URL: role kpi_backup through the session pooler.
+# Run by hand with target=dev to rehearse against the development project: it
+# reads KPI_BACKUP_DB_URL_DEV and writes to the `data-dev` branch.
 
 on:
   schedule:
     - cron: "17 9 * * *"
   workflow_dispatch:
+    inputs:
+      target:
+        description: "prod writes to data; dev writes to data-dev"
+        type: choice
+        options: [prod, dev]
+        default: prod
+  # TEMPORARY: rehearsal against dev before merging. Remove before merge.
+  push:
+    branches: [ci/backup-data]
 
 permissions:
   contents: write
 
+env:
+  TARGET: ${{ inputs.target || (github.event_name == 'push' && 'dev') || 'prod' }}
+
 concurrency:
-  group: data-backup
+  group: data-backup-${{ inputs.target || (github.event_name == 'push' && 'dev') || 'prod' }}
   cancel-in-progress: false
 
 jobs:
@@ -26,16 +40,22 @@ jobs:
         uses: actions/checkout@v6
       - name: Check out the data branch
         run: |
-          if git ls-remote --exit-code --heads origin data >/dev/null; then
-            git fetch --depth=1 origin data
+          branch=$([ "$TARGET" = dev ] && echo data-dev || echo data)
+          echo "BRANCH=$branch" >> "$GITHUB_ENV"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null; then
+            git fetch --depth=1 origin "$branch"
             git worktree add data-branch FETCH_HEAD
           else
-            git worktree add --orphan -b data data-branch
+            git worktree add --orphan -b "$branch" data-branch
           fi
       - name: Export
         env:
-          DATABASE_URL: ${{ secrets.KPI_BACKUP_DB_URL }}
+          PROD_URL: ${{ secrets.KPI_BACKUP_DB_URL }}
+          DEV_URL: ${{ secrets.KPI_BACKUP_DB_URL_DEV }}
         run: |
+          # Chosen here, not with `&&`/`||` in an expression: an empty dev secret would fall back to prod.
+          export DATABASE_URL=$([ "$TARGET" = dev ] && echo "$DEV_URL" || echo "$PROD_URL")
+          [ -n "$DATABASE_URL" ] || { echo "::error::Missing the database secret for target $TARGET"; exit 1; }
           command -v psql >/dev/null || sudo apt-get install -y postgresql-client
           scripts/backup-data.sh data-branch
       - name: Commit
@@ -44,5 +64,5 @@ jobs:
           git add -A
           git diff --cached --quiet && { echo "Nothing new."; exit 0; }
           git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
-            commit -m "data: export of $(date -u +%F)"
-          git push origin HEAD:data
+            commit -m "data: export of $(date -u +%F) ($TARGET)"
+          git push origin "HEAD:$BRANCH"
