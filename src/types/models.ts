@@ -30,6 +30,8 @@ export interface ComplianceRow {
   expected_kpis: number;
 }
 
+export type PublicComplianceRow = Pick<ComplianceRow, "team_number" | "project_name" | "report_date" | "valid_kpis" | "expected_kpis" | "business_kpis" | "technical_kpis" | "health_kpis" | "status" | "score">;
+
 export interface KpiCatalogRow {
   project_id: string;
   env: Environment;

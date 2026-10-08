@@ -154,6 +154,13 @@ isOneToOne: false
                   Relationships: [
 
                   ]
+                },"v_public_compliance": {
+                  Row: {
+                    "business_kpis": number | null,"expected_kpis": number | null,"health_kpis": number | null,"project_name": string | null,"report_date": string | null,"score": number | null,"status": string | null,"team_number": number | null,"technical_kpis": number | null,"valid_kpis": number | null
+                  }
+                  Relationships: [
+
+                  ]
                 },"v_measurements_enriched": {
                   Row: {
                     "date": string | null,"description": string | null,"env": Database["public"]['Enums']["reporting_environment"] | null,"kind": Database["public"]['Enums']["kpi_kind"] | null,"kpi_id": string | null,"kpi_name": string | null,"project_id": string | null,"project_key": string | null,"project_name": string | null,"received_on": string | null,"reported_at": string | null,"run_id": string | null,"team_number": number | null,"unit": string | null,"value": number | null

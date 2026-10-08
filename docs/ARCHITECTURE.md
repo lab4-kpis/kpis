@@ -33,7 +33,7 @@ Profesor ── Google OAuth ──> Portal Vite/GitHub Pages ── JWT ──>
 
 - Catálogo: autogestionado por cada equipo, uno por ambiente como las claves y las mediciones; alta y cambios limitados, sin borrado ni renombre.
 - Ingesta: mediciones numéricas e inmutables.
-- Cumplimiento: calendario global y vistas enriquecidas.
+- Cumplimiento: calendario global y vistas enriquecidas. `v_public_compliance` expone a `anon` sólo los agregados por equipo y día (estado, KPIs reportados y esperados, puntaje) a través de una función `security definer`; sin ids, valores, catálogos, claves ni contactos.
 - Administración: equipos, claves, profesores y configuración.
 - Auditoría: cambios administrativos y de catálogo sin secretos.
 - Contrato: OpenAPI, JSON Schema y ejemplos sin SDK obligatorio.
