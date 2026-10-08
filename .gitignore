@@ -48,3 +48,6 @@ pnpm-debug.log*
 *.swp
 *.swo
 Thumbs.db
+
+# Personal data loaded out of band (team contacts)
+supabase/private/

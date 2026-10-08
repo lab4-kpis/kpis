@@ -1,4 +1,4 @@
-import { BookOpen } from "lucide-react";
+import { BookOpen, CalendarCheck } from "lucide-react";
 import { Navigate, Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -57,9 +57,10 @@ export function LoginPage() {
             )}
           </CardContent>
         </Card>
-        <div className="mt-5 flex items-center justify-center gap-1 text-sm">
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-1 text-sm">
           <span className="text-muted-foreground">¿Integrás un equipo?</span>
           <Button asChild variant="ghost" size="sm"><Link to="/docs"><BookOpen className="size-4" />Ver API pública</Link></Button>
+          <Button asChild variant="ghost" size="sm"><Link to="/cumplimiento"><CalendarCheck className="size-4" />Ver cumplimiento</Link></Button>
         </div>
       </div>
     </main>

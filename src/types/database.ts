@@ -51,13 +51,13 @@ export type Database = {
                   ]
                 },"kpi_catalog": {
                   Row: {
-                    "aggregation": string | null,"created_at": string,"deprecated_at": string | null,"description": string,"frequency": string,"id": string,"justification": string | null,"kind": Database["public"]['Enums']["kpi_kind"],"name": string | null,"project_id": string,"source": string | null,"unit": string,"updated_at": string
+                    "aggregation": string | null,"created_at": string,"deprecated_at": string | null,"description": string,"env": Database["public"]['Enums']["reporting_environment"],"frequency": string,"id": string,"justification": string | null,"kind": Database["public"]['Enums']["kpi_kind"],"name": string | null,"project_id": string,"source": string | null,"unit": string,"updated_at": string
                   }
                   Insert: {
-                    "aggregation"?: string | null,"created_at"?: string,"deprecated_at"?: string | null,"description": string,"frequency"?: string,"id": string,"justification"?: string | null,"kind": Database["public"]['Enums']["kpi_kind"],"name"?: string | null,"project_id": string,"source"?: string | null,"unit": string,"updated_at"?: string
+                    "aggregation"?: string | null,"created_at"?: string,"deprecated_at"?: string | null,"description": string,"env"?: Database["public"]['Enums']["reporting_environment"],"frequency"?: string,"id": string,"justification"?: string | null,"kind": Database["public"]['Enums']["kpi_kind"],"name"?: string | null,"project_id": string,"source"?: string | null,"unit": string,"updated_at"?: string
                   }
                   Update: {
-                    "aggregation"?: string | null,"created_at"?: string,"deprecated_at"?: string | null,"description"?: string,"frequency"?: string,"id"?: string,"justification"?: string | null,"kind"?: Database["public"]['Enums']["kpi_kind"],"name"?: string | null,"project_id"?: string,"source"?: string | null,"unit"?: string,"updated_at"?: string
+                    "aggregation"?: string | null,"created_at"?: string,"deprecated_at"?: string | null,"description"?: string,"env"?: Database["public"]['Enums']["reporting_environment"],"frequency"?: string,"id"?: string,"justification"?: string | null,"kind"?: Database["public"]['Enums']["kpi_kind"],"name"?: string | null,"project_id"?: string,"source"?: string | null,"unit"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -86,11 +86,11 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
-      foreignKeyName: "measurement_project_id_kpi_id_fkey"
-      columns: ["project_id","kpi_id"]
+      foreignKeyName: "measurement_project_id_env_kpi_id_fkey"
+      columns: ["project_id","env","kpi_id"]
 isOneToOne: false
       referencedRelation: "kpi_catalog"
-      referencedColumns: ["project_id","id"]
+      referencedColumns: ["project_id","env","id"]
     }
                   ]
                 },"project_api_keys": {
@@ -154,23 +154,35 @@ isOneToOne: false
                   Relationships: [
 
                   ]
+                },"v_public_compliance": {
+                  Row: {
+                    "business_kpis": number | null,"expected_kpis": number | null,"health_kpis": number | null,"project_name": string | null,"report_date": string | null,"score": number | null,"status": string | null,"team_number": number | null,"technical_kpis": number | null,"valid_kpis": number | null
+                  }
+                  Relationships: [
+
+                  ]
                 },"v_measurements_enriched": {
                   Row: {
                     "date": string | null,"description": string | null,"env": Database["public"]['Enums']["reporting_environment"] | null,"kind": Database["public"]['Enums']["kpi_kind"] | null,"kpi_id": string | null,"kpi_name": string | null,"project_id": string | null,"project_key": string | null,"project_name": string | null,"received_on": string | null,"reported_at": string | null,"run_id": string | null,"team_number": number | null,"unit": string | null,"value": number | null
                   }
                   Relationships: [
                     {
-      foreignKeyName: "measurement_project_id_kpi_id_fkey"
-      columns: ["project_id","kpi_id"]
+      foreignKeyName: "measurement_project_id_env_kpi_id_fkey"
+      columns: ["project_id","env","kpi_id"]
 isOneToOne: false
       referencedRelation: "kpi_catalog"
-      referencedColumns: ["project_id","id"]
+      referencedColumns: ["project_id","env","id"]
     }
                   ]
                 }
           }
           Functions: {
-            "hook_restrict_admin_signup":
+            "current_project":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "env": Database["public"]['Enums']["reporting_environment"],"name": string,"project_key": string,"team_number": number
+            }[]
+                           },
+"hook_restrict_admin_signup":
 { Args: { "event": Json }; Returns: Json
                            },
 "is_current_user_admin":

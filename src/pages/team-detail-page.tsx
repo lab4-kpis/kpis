@@ -38,7 +38,7 @@ function whatsappKeyUrl(project: Project, env: Environment, key: string) {
 async function loadProjectDetail(projectId: string) {
   const [projectResult, catalogResult, measurementResult, complianceResult, keysResult] = await Promise.all([
     getSupabase().from("projects").select("*").eq("id", projectId).single(),
-    getSupabase().from("kpi_catalog").select("*").eq("project_id", projectId).order("id"),
+    getSupabase().from("kpi_catalog").select("*").eq("project_id", projectId).order("env", { ascending: false }).order("id"),
     getSupabase().from("v_measurements_enriched").select("*").eq("project_id", projectId).order("reported_at", { ascending: false }).limit(250),
     getSupabase().from("v_compliance").select("*").eq("project_id", projectId).order("report_date", { ascending: false }).limit(120),
     getSupabase().from("project_api_keys").select("id,project_id,env,key_prefix,created_at,last_used_at,revoked_at").eq("project_id", projectId).order("created_at", { ascending: false }),
@@ -96,7 +96,7 @@ export function TeamDetailPage() {
 
   if (loading) return <LoadingState />;
   if (error || !data) return <ErrorState message={error ?? "Equipo no encontrado."} onRetry={() => void reload()} />;
-  const activeCatalog = data.catalog.filter((kpi) => !kpi.deprecated_at);
+  const activeCatalog = data.catalog.filter((kpi) => kpi.env === "prod" && !kpi.deprecated_at);
 
   return (
     <>
@@ -159,7 +159,7 @@ export function TeamDetailPage() {
 
 function CatalogTab({ rows, activeCount }: { rows: KpiCatalogRow[]; activeCount: number }) {
   if (!rows.length) return <EmptyState title="El equipo todavía no cargó su catálogo" description="Debe registrar entre 5 y 10 KPIs con su X-Project-Key antes de reportar mediciones." />;
-  return <><div className="mb-3 flex items-center justify-between"><p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">{activeCount}/10</span> KPIs activos {activeCount < 5 ? "· catálogo incompleto" : ""}</p></div><TableShell><TableHead><tr><Th>KPI</Th><Th>Tipo</Th><Th>Unidad</Th><Th>Agregación</Th><Th>Estado</Th></tr></TableHead><TableBody>{rows.map((row) => <TableRow key={row.id}><Td><p className="font-mono text-xs font-medium">{row.id}</p><p className="mt-1 max-w-xl text-xs text-muted-foreground">{row.description}</p></Td><Td><Badge variant="blue">{row.kind}</Badge></Td><Td><code className="font-mono text-xs">{row.unit}</code></Td><Td>{row.aggregation ?? "-"}</Td><Td>{row.deprecated_at ? <Badge>Retirado {formatDate(row.deprecated_at)}</Badge> : <Badge variant="success">Activo</Badge>}</Td></TableRow>)}</TableBody></TableShell></>;
+  return <><div className="mb-3 flex items-center justify-between"><p className="text-sm text-muted-foreground"><span className="font-medium text-foreground">{activeCount}/10</span> KPIs activos en prod {activeCount < 5 ? "· catálogo incompleto" : ""}</p></div><TableShell><TableHead><tr><Th>KPI</Th><Th>Ambiente</Th><Th>Tipo</Th><Th>Unidad</Th><Th>Agregación</Th><Th>Estado</Th></tr></TableHead><TableBody>{rows.map((row) => <TableRow key={`${row.env}:${row.id}`}><Td><p className="font-mono text-xs font-medium">{row.id}</p><p className="mt-1 max-w-xl text-xs text-muted-foreground">{row.description}</p></Td><Td><code className="font-mono text-xs">{row.env}</code></Td><Td><Badge variant="blue">{row.kind}</Badge></Td><Td><code className="font-mono text-xs">{row.unit}</code></Td><Td>{row.aggregation ?? "-"}</Td><Td>{row.deprecated_at ? <Badge>Retirado {formatDate(row.deprecated_at)}</Badge> : <Badge variant="success">Activo</Badge>}</Td></TableRow>)}</TableBody></TableShell></>;
 }
 
 function MeasurementsTab({ rows, projectKey }: { rows: MeasurementRow[]; projectKey: string }) {

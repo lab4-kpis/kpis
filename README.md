@@ -1,6 +1,6 @@
 # Lab4 KPIs
 
-Plataforma central y minimalista para recibir KPIs diarios de los equipos de Lab4. Supabase/Postgres es la única fuente de verdad; el portal Vite en GitHub Pages es exclusivo para profesores y consume la API generada por Supabase.
+Plataforma central y minimalista para recibir KPIs diarios de los equipos de Lab4. Supabase/Postgres es la única fuente de verdad; el portal Vite en GitHub Pages es para profesores y consume la API generada por Supabase. El cumplimiento diario de todos los equipos es público, sin login, en `#/cumplimiento`.
 
 ## Componentes
 

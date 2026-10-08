@@ -112,10 +112,13 @@ export function createServer(auth: Auth) {
 
   server.registerTool("team_catalog", {
     title: "KPI catalog",
-    description: "KPIs registered by a team: kind, unit, definition, aggregation, and deprecation date.",
-    inputSchema: { team },
+    description: "KPIs registered by a team in one environment: kind, unit, definition, aggregation, and deprecation date. Each environment has its own catalog.",
+    inputSchema: {
+      team,
+      env: z.enum(["dev", "qa", "prod"]).default("prod").describe("Reporting environment. Only the prod catalog counts for compliance."),
+    },
     annotations: readOnly,
-  }, ({ team: teamRef }) => authorized(() => queries.teamCatalog(auth.client, teamRef)));
+  }, ({ team: teamRef, env }) => authorized(() => queries.teamCatalog(auth.client, teamRef, env)));
 
   server.registerTool("team_measurements", {
     title: "Measurements",

@@ -13,6 +13,8 @@ La plataforma recibe todos los días entre 5 y 10 KPIs de cada equipo y los mues
 - [ ] 5. El primer día del período, revisar el **Resumen diario**.
 - [ ] 6. *(Opcional)* Conectar el MCP a Claude Code o Codex.
 
+Las capturas de esta guía son del portal de desarrollo, con correos reemplazados por ejemplos.
+
 
 
 ## 1. Acceso al portal
@@ -25,7 +27,9 @@ La plataforma recibe todos los días entre 5 y 10 KPIs de cada equipo y los mues
 
 **Sumar o quitar a otro profesor:** ir a **Configuración → Profesores → Agregar** y cargar su correo. No se manda ninguna invitación, así que hay que avisarle que ya puede entrar. Para quitar el acceso, desactivarlo desde la misma lista. El último profesor activo no se puede desactivar.
 
-> 📄 **[PDF: Ingresar al portal y sumar un profesor]**
+![Configuración: calendario de evaluación, profesores habilitados y actividad reciente](img/configuracion.jpg)
+
+![Agregar profesor: sólo se carga el correo; no se envía invitación](img/agregar-profesor.jpg)
 
 
 
@@ -65,7 +69,7 @@ Los 16 equipos ya están cargados, cada uno con su referente. Los equipos ya tie
 - **Equipo nuevo:** en **Equipos → Nuevo equipo**, cargar número, nombre e identificador (`equipo-17-nombre`). Un equipo nuevo no tiene referente cargado, así que no aparece el botón de WhatsApp: copiar la clave y mandarla por mensaje privado.
 - **Desactivar equipo** bloquea todas sus claves y **no se puede deshacer**. El historial se conserva.
 
-> 📄 **[PDF: Emitir una clave y enviarla por WhatsApp]**
+![Pestaña Claves de un equipo: elegir el ambiente y pulsar Emitir o rotar](img/claves-equipo.jpg)
 
 
 
@@ -90,9 +94,11 @@ Para ver un equipo en detalle, abrirlo desde **Equipos**:
 - **Cumplimiento:** estado y puntaje día por día.
 - **Mediciones:** cada valor recibido, con fecha y ambiente.
 
-> 📄 **[PDF: Revisar el cumplimiento diario]**
+![Resumen diario: equipos sin reporte arriba y KPIs válidos por tipo](img/resumen-diario.jpg)
 
+![Equipo → Cumplimiento: estado y KPIs reportados sobre esperados, día por día](img/cumplimiento-equipo.jpg)
 
+Los equipos ven su propio estado, y el de los demás, en el [panel público de cumplimiento](https://lab4-kpis.github.io/kpis/#/cumplimiento), sin login. Muestra el mismo estado y puntaje que el Resumen diario, sin valores de KPIs ni datos de contacto. Para ver sus propios valores, cada equipo entra a **Mi equipo** con su clave.
 
 ## 6. Consultar y analizar los KPIs
 
@@ -120,7 +126,6 @@ Después, pedirle al agente *"iniciá sesión en Lab4 KPIs"* y entrar con Google
 
 Para cerrar sesión: *"cerrá sesión en Lab4 KPIs"*. El detalle técnico y la resolución de problemas están en [MCP.md](../MCP.md).
 
-> 📄 **[PDF: Instalar el MCP y hacer la primera consulta]**
 
 
 
@@ -133,16 +138,37 @@ Para cerrar sesión: *"cerrá sesión en Lab4 KPIs"*. El detalle técnico y la r
 
 Cada equipo debe tener entre 5 y 10 KPIs activos. Para supervisarlo, el profesor tiene:
 
-- **Equipo → Catálogo:** KPIs activos y retirados, con tipo, unidad y definición.
+- **Equipo → Catálogo:** KPIs activos y retirados de cada ambiente, con tipo, unidad y definición. El conteo de activos es el de `prod`, que es el que se exige.
+
+![Equipo → Catálogo: cada KPI con su tipo, unidad, agregación y estado](img/catalogo-equipo.jpg)
+
 - **Configuración → Actividad reciente:** quién agregó o retiró qué, y cuándo.
 
 **El estándar** (un tipo de KPI nuevo, un campo, una regla) se cambia con un PR en `lab4-kpis/kpis`:
 
 - Un cambio compatible necesita la aprobación de otro equipo.
 - Un cambio incompatible necesita dos aprobaciones de equipos distintos y 48 horas en las que cualquiera puede objetar.
-- Una vez mergeado el PR, la cátedra aplica la migración dentro de los 7 días, pegándola en el **SQL Editor** de Supabase.
+- Si el cambio trae una migración, se aplica en la base como explica la sección 8: en producción, antes de mergear a `main`.
 
 Las reglas completas están en el Anexo B de [PROPUESTA.md](PROPUESTA.md).
+
+## 8. Aplicar un cambio aprobado
+
+Un PR aprobado se mergea primero en `dev` y después en `main`. Cada pieza se publica de una forma distinta:
+
+| Pieza | Cómo se publica | Cómo se comprueba |
+| --- | --- | --- |
+| Portal | **Solo.** Cada merge a `dev` o `main` lo reconstruye en un par de minutos | En la pestaña **Actions** del repo, *Deploy portal to GitHub Pages* en verde |
+| MCP | **Solo**, si el PR toca `mcp/` o `plugins/` y llega a `main` | *Publish MCP package* en verde. Cada profesor actualiza con `claude plugin marketplace update lab4-kpis` y `claude plugin update lab4-kpis@lab4-kpis`, o en Codex con `codex plugin marketplace upgrade` |
+| Base de datos | **A mano.** Un merge no toca la base | Ver los pasos de abajo |
+
+**Si el PR trae archivos nuevos en `supabase/migrations/`:**
+
+1. **Primero en desarrollo.** En [Supabase](https://supabase.com/dashboard), abrir el proyecto `lab4-kpis-dev` → **SQL Editor** → **New query**, pegar el archivo completo y pulsar **Run**. Si hay más de un archivo, ir en orden de nombre.
+2. **Comprobar en el portal de desarrollo** (`/kpis/dev/`) que la pantalla que cambió el PR funciona.
+3. **Después en producción**, igual que en el paso 1 pero en el proyecto de producción, **antes de mergear a `main`**. El portal nuevo espera la base nueva: si se mergea primero, sus pantallas fallan hasta que se aplica la migración.
+
+Hay que usar siempre el mismo camino. Si las migraciones se aplican desde el SQL Editor, avisarle al mantenedor que las aplicó así, porque `npm run db:push` no las ve como hechas e intentaría repetirlas.
 
 ## Si algo falla
 
@@ -152,9 +178,10 @@ Las reglas completas están en el Anexo B de [PROPUESTA.md](PROPUESTA.md).
 | No puedo entrar al portal              | Revisar que la cuenta esté activa en **Configuración → Profesores** (otro profesor la puede activar) y que el ingreso sea con Google. |
 | Un equipo recibe `403`                 | La clave es inválida o fue revocada. Emitir una nueva en **Claves** y enviarla.                                                       |
 | Un equipo recibe `401`                 | Está usando la clave de un ambiente con otro. Por ejemplo, la clave `dev` con `"env":"prod"`.                                         |
-| Un equipo recibe `409`                 | Reporta un KPI que no está en su catálogo. Tiene que darlo de alta primero.                                                           |
+| Un equipo recibe `409`                 | Reporta un KPI que no está en el catálogo de ese ambiente. Tiene que darlo de alta primero con la clave de ese ambiente.                                                           |
 | Un equipo reportó pero no aparece      | Revisar en **Mediciones** si lo mandó en `dev`, que no cuenta, o en un día no evaluable.                                              |
 | No puedo emitir claves `prod`          | Falta guardar el período en **Configuración**.                                                                                        |
+| Una pantalla del portal falla después de un merge | Falta aplicar la migración del PR en esa base. Ver la sección 8. |
 | El MCP dice "not an enabled professor" | La cuenta no está activa en **Configuración → Profesores**.                                                                           |
 
 
