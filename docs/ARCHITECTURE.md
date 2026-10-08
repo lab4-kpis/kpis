@@ -27,13 +27,13 @@ Profesor ── Google OAuth ──> Portal Vite/GitHub Pages ── JWT ──>
 - `measurement` no admite `UPDATE` ni `DELETE`, incluso si se intenta desde el panel SQL sin desactivar explícitamente el trigger.
 - El rol `anon` tiene lectura sólo sobre las cuatro columnas del índice idempotente porque PostgreSQL la exige para `ON CONFLICT DO NOTHING`. La política RLS correspondiente se activa únicamente durante un `POST` y para el proyecto de la clave; un `GET` no expone mediciones.
 - El cumplimiento cuenta KPIs distintos recibidos en `prod` según `reported_at` en `America/Argentina/Buenos_Aires`.
-- Un proyecto admite 10 KPIs activos y 10 KPIs distintos recibidos por día y ambiente.
+- Un proyecto admite 10 KPIs activos por ambiente y 10 KPIs distintos recibidos por día y ambiente. Una medición sólo acepta KPIs del catálogo de su mismo ambiente, y el cumplimiento se mide contra el catálogo de `prod`.
 
 ## Módulos
 
-- Catálogo: autogestionado por cada equipo; alta y cambios limitados, sin borrado ni renombre.
-- Ingesta: mediciones numéricas e inmutables.
-- Cumplimiento: calendario global y vistas enriquecidas.
+- Catálogo: autogestionado por cada equipo, uno por ambiente como las claves y las mediciones; alta y cambios limitados, sin borrado ni renombre.
+- Ingesta: mediciones numéricas e inmutables. Cada clave lee sólo las mediciones de su proyecto y ambiente; `current_project()` dice a qué equipo y ambiente pertenece la clave.
+- Cumplimiento: calendario global y vistas enriquecidas. `v_public_compliance` expone a `anon` sólo los agregados por equipo y día (estado, KPIs reportados y esperados, puntaje) a través de una función `security definer`; sin ids, valores, catálogos, claves ni contactos.
 - Administración: equipos, claves, profesores y configuración.
 - Auditoría: cambios administrativos y de catálogo sin secretos.
 - Contrato: OpenAPI, JSON Schema y ejemplos sin SDK obligatorio.

@@ -4,7 +4,7 @@
     "lab4-kpis": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@lab4-kpis/mcp@0.1.2"]
+      "args": ["-y", "@lab4-kpis/mcp@0.1.3"]
     }
   }
 }

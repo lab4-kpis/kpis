@@ -15,6 +15,36 @@ tags:
   - name: Measurements
     description: Mediciones inmutables
 paths:
+  /rest/v1/rpc/current_project:
+    post:
+      tags: [Catalog]
+      summary: Identificar la clave
+      description: Equipo y ambiente a los que pertenece la clave enviada. Vacío si la clave falta, es inválida o fue revocada.
+      security:
+        - SupabasePublishableKey: []
+          ProjectKey: []
+      parameters:
+        - $ref: '#/components/parameters/ContentJson'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, maxProperties: 0 }
+      responses:
+        '200':
+          description: Cero o una fila
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 1
+                items:
+                  type: object
+                  properties:
+                    team_number: { type: integer }
+                    project_key: { type: string }
+                    name: { type: string }
+                    env: { $ref: '#/components/schemas/Environment' }
   /rest/v1/kpi_catalog:
     get:
       tags: [Catalog]
@@ -29,7 +59,7 @@ paths:
           schema: { type: string, default: id.asc }
       responses:
         '200':
-          description: Catálogo visible para la clave del equipo; vacío si la clave falta o no es válida
+          description: Catálogo del ambiente de la clave del equipo; vacío si la clave falta o no es válida
           content:
             application/json:
               schema:
@@ -38,7 +68,7 @@ paths:
     post:
       tags: [Catalog]
       summary: Registrar uno o más KPIs
-      description: El servidor asigna `project_id`. Un proyecto puede tener como máximo 10 KPIs activos.
+      description: El servidor asigna `project_id` y `env` a partir de la clave. Cada ambiente tiene su propio catálogo y como máximo 10 KPIs activos.
       security:
         - SupabasePublishableKey: []
           ProjectKey: []
@@ -95,6 +125,32 @@ paths:
         '401': { $ref: '#/components/responses/NotAllowed' }
         '403': { $ref: '#/components/responses/InvalidKey' }
   /rest/v1/measurement:
+    get:
+      tags: [Measurements]
+      summary: Listar las mediciones propias
+      description: Devuelve sólo las mediciones del equipo y del ambiente de la clave. Sin clave válida, la lista viene vacía.
+      security:
+        - SupabasePublishableKey: []
+          ProjectKey: []
+      parameters:
+        - $ref: '#/components/parameters/AcceptJson'
+        - name: order
+          in: query
+          schema: { type: string, default: reported_at.desc }
+      responses:
+        '200':
+          description: Mediciones aceptadas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/MeasurementWrite'
+                    - type: object
+                      required: [reported_at]
+                      properties:
+                        reported_at: { type: string, format: date-time, description: Recepción en el servidor; define el día que cuenta. }
     post:
       tags: [Measurements]
       summary: Reportar un lote diario
@@ -216,9 +272,10 @@ components:
       allOf:
         - $ref: '#/components/schemas/KpiCatalogWrite'
         - type: object
-          required: [project_id, frequency, created_at, updated_at]
+          required: [project_id, env, frequency, created_at, updated_at]
           properties:
             project_id: { type: string, format: uuid }
+            env: { $ref: '#/components/schemas/Environment' }
             frequency: { type: string, const: daily }
             deprecated_at: { type: [string, 'null'], format: date }
             created_at: { type: string, format: date-time }
