@@ -1,0 +1,48 @@
+name: Daily data backup
+
+# Governance rule 10a: exports every closed reception day to data/YYYY-MM-DD.csv
+# on the `data` branch (scripts/backup-data.sh). Fails without committing if a
+# closed day changed in the database. 06:17 in Buenos Aires: the day before is
+# closed with margin, and minute 17 avoids the top-of-hour cron queue.
+# Needs the secret KPI_BACKUP_DB_URL: role kpi_backup through the session pooler.
+
+on:
+  schedule:
+    - cron: "17 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: data-backup
+  cancel-in-progress: false
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Check out the data branch
+        run: |
+          if git ls-remote --exit-code --heads origin data >/dev/null; then
+            git fetch --depth=1 origin data
+            git worktree add data-branch FETCH_HEAD
+          else
+            git worktree add --orphan -b data data-branch
+          fi
+      - name: Export
+        env:
+          DATABASE_URL: ${{ secrets.KPI_BACKUP_DB_URL }}
+        run: |
+          command -v psql >/dev/null || sudo apt-get install -y postgresql-client
+          scripts/backup-data.sh data-branch
+      - name: Commit
+        working-directory: data-branch
+        run: |
+          git add -A
+          git diff --cached --quiet && { echo "Nothing new."; exit 0; }
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "data: export of $(date -u +%F)"
+          git push origin HEAD:data
