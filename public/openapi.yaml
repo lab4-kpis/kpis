@@ -59,7 +59,7 @@ paths:
           schema: { type: string, default: id.asc }
       responses:
         '200':
-          description: Catálogo visible para la clave del equipo; vacío si la clave falta o no es válida
+          description: Catálogo del ambiente de la clave del equipo; vacío si la clave falta o no es válida
           content:
             application/json:
               schema:
@@ -68,7 +68,7 @@ paths:
     post:
       tags: [Catalog]
       summary: Registrar uno o más KPIs
-      description: El servidor asigna `project_id`. Un proyecto puede tener como máximo 10 KPIs activos.
+      description: El servidor asigna `project_id` y `env` a partir de la clave. Cada ambiente tiene su propio catálogo y como máximo 10 KPIs activos.
       security:
         - SupabasePublishableKey: []
           ProjectKey: []
@@ -272,9 +272,10 @@ components:
       allOf:
         - $ref: '#/components/schemas/KpiCatalogWrite'
         - type: object
-          required: [project_id, frequency, created_at, updated_at]
+          required: [project_id, env, frequency, created_at, updated_at]
           properties:
             project_id: { type: string, format: uuid }
+            env: { $ref: '#/components/schemas/Environment' }
             frequency: { type: string, const: daily }
             deprecated_at: { type: [string, 'null'], format: date }
             created_at: { type: string, format: date-time }
