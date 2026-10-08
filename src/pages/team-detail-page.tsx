@@ -18,10 +18,10 @@ import type { ComplianceRow, Environment, KpiCatalogRow, MeasurementRow, Project
 
 type Tab = "catalog" | "measurements" | "history" | "keys";
 
-function whatsappKeyUrl(project: Project, env: Environment, key: string) {
+function keyMessage(project: Project, env: Environment, key: string) {
   const docsUrl = `${window.location.origin}${window.location.pathname}#/docs`;
-  const text = [
-    `Hola ${project.contact_name}! Esta es la clave ${env} de ${project.name} (equipo ${project.team_number}) para reportar KPIs.`,
+  return [
+    `Hola${project.contact_name ? ` ${project.contact_name}` : ""}! Esta es la clave ${env} de ${project.name} (equipo ${project.team_number}) para reportar KPIs.`,
     "",
     `PROJECT_KEY=${key}`,
     `SUPABASE_URL=${publicConfig.supabaseUrl}`,
@@ -32,7 +32,10 @@ function whatsappKeyUrl(project: Project, env: Environment, key: string) {
     "",
     "Guardala en el gestor de secretos, no la subas al repo. dev no cuenta para la nota; sólo prod suma.",
   ].join("\n");
-  return `https://wa.me/${project.contact_phone}?text=${encodeURIComponent(text)}`;
+}
+
+function whatsappKeyUrl(project: Project, env: Environment, key: string) {
+  return `https://wa.me/${project.contact_phone}?text=${encodeURIComponent(keyMessage(project, env, key))}`;
 }
 
 async function loadProjectDetail(projectId: string) {
@@ -88,8 +91,8 @@ export function TeamDetailPage() {
   }
 
   async function copySecret() {
-    if (!secret) return;
-    await navigator.clipboard.writeText(secret.value);
+    if (!secret || !data) return;
+    await navigator.clipboard.writeText(keyMessage(data.project, secret.env, secret.value));
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2000);
   }
@@ -132,7 +135,7 @@ export function TeamDetailPage() {
           <DialogHeader><DialogTitle>Guardá esta clave ahora</DialogTitle><DialogDescription>Es la única vez que se muestra. La base conserva solamente su hash SHA-256.</DialogDescription></DialogHeader>
           <div className="rounded-md border bg-muted p-3"><p className="mb-1 text-xs font-medium uppercase text-muted-foreground">Ambiente {secret?.env}</p><code className="break-all font-mono text-sm">{secret?.value}</code></div>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button onClick={() => void copySecret()}>{copied ? <Check className="size-4" /> : <Clipboard className="size-4" />}{copied ? "Copiada" : "Copiar clave"}</Button>
+            <Button onClick={() => void copySecret()}>{copied ? <Check className="size-4" /> : <Clipboard className="size-4" />}{copied ? "Copiado" : "Copiar mensaje"}</Button>
             {secret && data.project.contact_phone ? (
               <Button asChild className="bg-success text-white hover:bg-[#11603c]">
                 <a href={whatsappKeyUrl(data.project, secret.env, secret.value)} target="_blank" rel="noreferrer"><MessageCircle className="size-4" />Enviar por WhatsApp al PM</a>
