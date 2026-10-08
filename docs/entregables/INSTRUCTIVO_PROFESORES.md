@@ -73,7 +73,7 @@ Los 16 equipos ya están cargados, cada uno con su referente. Los equipos ya tie
 3. En la ventana que se abre, pulsar **Enviar por WhatsApp a PM**. Se abre WhatsApp con un mensaje listo que trae la clave y todo lo que el equipo necesita para integrarse. Enviarlo.
 
 - La clave se ve **una sola vez**. Si el equipo la pierde o la filtra, pulsar **Emitir o rotar** de nuevo: se emite una clave nueva y la anterior deja de funcionar en el mismo momento.
-- **Equipo nuevo:** en **Equipos → Nuevo equipo**, cargar número, nombre e identificador (`equipo-17-nombre`). Un equipo nuevo no tiene referente cargado, así que no aparece el botón de WhatsApp: copiar la clave y mandarla por mensaje privado.
+- **Equipo nuevo:** en **Equipos → Nuevo equipo**, cargar número, nombre e identificador (`equipo-17-nombre`). Un equipo nuevo no tiene referente cargado, así que no aparece el botón de WhatsApp: pulsar **Copiar mensaje**, que copia el mismo texto que iría por WhatsApp, y mandarlo por mensaje privado.
 - **Desactivar equipo** bloquea todas sus claves y **no se puede deshacer**. El historial se conserva.
 
 ![Pestaña Claves de un equipo: elegir el ambiente y pulsar Emitir o rotar](img/claves-equipo.jpg)
