@@ -44,7 +44,21 @@ El hook evita crear usuarios fuera de la allowlist; RLS sigue bloqueando el acce
 
 ## 4. Contacto de cada equipo
 
-El referente y el teléfono de cada equipo (`projects.contact_name`, `projects.contact_phone`) se cargan por migración y no se editan desde el portal. El teléfono va en dígitos E.164 sin `+`, como lo espera `wa.me`. Ver `supabase/migrations/202610070001_project_contacts.sql`.
+El referente y el teléfono de cada equipo (`projects.contact_name`, `projects.contact_phone`) alimentan el botón de WhatsApp al emitir una clave. No se editan desde el portal.
+
+La migración `202610070001_project_contacts.sql` crea sólo las columnas. **Los datos no se versionan**, porque el repo es público: se cargan una vez por proyecto Supabase pegando en el **SQL Editor** un `update` como este, que se guarda localmente en `supabase/private/` (ignorado por git):
+
+```sql
+update public.projects p
+set contact_name = c.contact_name, contact_phone = c.contact_phone
+from (values
+  (1, 'Nombre Apellido', '5491100000000')
+  -- una fila por equipo
+) as c(team_number, contact_name, contact_phone)
+where p.team_number = c.team_number;
+```
+
+El teléfono va en dígitos E.164 sin `+`, como lo espera `wa.me`. La lista de referentes la tiene el grupo de WhatsApp de Lab IV.
 
 ## Publicar en GitHub Pages
 

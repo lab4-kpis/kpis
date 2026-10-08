@@ -9,6 +9,7 @@ alter table public.projects
 
 comment on column public.projects.contact_phone is 'E.164 digits without +, as wa.me expects.';
 
--- Los contactos de cada equipo se cargan fuera del repo (SQL Editor): son datos personales.
+-- Data is loaded out of band (supabase/private/project_contacts.sql, gitignored):
+-- the repository is public and must not contain phone numbers.
 
 commit;
