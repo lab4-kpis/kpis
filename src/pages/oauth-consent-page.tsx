@@ -4,12 +4,12 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { useAuth } from "../contexts/auth-context";
 import { publicConfig } from "../lib/env";
-import { developmentAuthUrl, validAuthorizationId, loadConsent, decideConsent, type ConsentDetails, type ConsentActions } from "../lib/oauth-consent";
+import { developmentAuthUrl, validAuthorizationId, validClientId, loadConsent, decideConsent, type ConsentDetails, type ConsentActions } from "../lib/oauth-consent";
 import { getSupabase } from "../lib/supabase";
 
 const pilotClientId = import.meta.env.VITE_MCP_OAUTH_CLIENT_ID?.trim() ?? "";
 const pilotReady = publicConfig.valid && publicConfig.supabaseUrl === developmentAuthUrl &&
-  import.meta.env.VITE_MCP_OAUTH_PILOT_READY === "true" && validAuthorizationId(pilotClientId);
+  import.meta.env.VITE_MCP_OAUTH_PILOT_READY === "true" && validClientId(pilotClientId);
 
 async function requireProfessor() {
   const { data, error } = await getSupabase().rpc("is_current_user_admin");

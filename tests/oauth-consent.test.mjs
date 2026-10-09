@@ -1,14 +1,19 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { consentEntryUrl, consentLoginUrl, validAuthorizationId, validateConsentDetails, validateConsentRedirect } from "../src/lib/oauth-consent.ts";
+import { consentEntryUrl, consentLoginUrl, validAuthorizationId, validClientId, validateConsentDetails, validateConsentRedirect } from "../src/lib/oauth-consent.ts";
 
-const id = "11111111-1111-4111-8111-111111111111";
+// Supabase Auth issues 32-character alphanumeric authorization IDs, not UUIDs.
+const id = "aB3dE5gH7jK9mN1pQ3sT5vW7yZ9bC1dE";
 const client = "22222222-2222-4222-8222-222222222222";
 const details = { authorization_id: id, client: { id: client }, user: { id: "professor" }, scope: "openid email profile" };
 
-test("only UUID authorization IDs are accepted", () => {
+test("only Supabase-shaped authorization IDs are accepted", () => {
   assert.equal(validAuthorizationId(id), true);
-  for (const invalid of [null, "", "https://evil.test", "../escape", `${id}/extra`]) assert.equal(validAuthorizationId(invalid), false);
+  for (const invalid of [null, "", client, `${id}x`, id.slice(1), "https://evil.test", "../escape", `${id}/extra`]) assert.equal(validAuthorizationId(invalid), false);
+});
+test("only UUID client IDs are accepted", () => {
+  assert.equal(validClientId(client), true);
+  for (const invalid of [null, "", id, `${client}/extra`]) assert.equal(validClientId(invalid), false);
 });
 test("outer authorization query wins over saved navigation without losing PKCE code", () => {
   const result = new URL(consentEntryUrl(`https://portal.test/kpis/dev/?authorization_id=${id}&code=google-code#/teams`) ?? "");
@@ -30,6 +35,8 @@ test("Google continuation returns only to the in-app consent route", () => {
 });
 test("verified request must match the authorization, current user and static client", () => {
   validateConsentDetails(details, id, "professor", client);
+  // ChatGPT requests offline_access for refresh tokens; it grants no KPI permission.
+  validateConsentDetails({ ...details, scope: "openid email offline_access" }, id, "professor", client);
   for (const args of [["bad", "professor", client], [id, "other", client], [id, "professor", ""], [id, "professor", "other"]]) {
     assert.throws(() => validateConsentDetails(details, ...args));
   }

@@ -20,7 +20,7 @@ Local stdio plugins are unchanged. No production configuration is required.
    development matrix; production is explicitly empty/false. Local Vite uses the
    unprefixed `VITE_*` names in its development environment.
    The Google continuation URL is the portal base plus
-   `#/oauth/consent?authorization_id=<UUID>`. The existing base redirect entry is
+   `#/oauth/consent?authorization_id=<id>`. The existing base redirect entry is
    sufficient in the reviewed upstream Auth implementation: matching Site URL
    scheme/host/port is accepted, and allowlist matching strips the fragment.
    Therefore no hash wildcard or redirect list change is necessary. Confirm the
@@ -38,8 +38,10 @@ Local stdio plugins are unchanged. No production configuration is required.
    passes. The page also requires the exact development Supabase origin. Deployment
    and live configuration updates require owner action; none are performed here.
 
-The page accepts only `openid`, `email`, and `profile` identity scopes; these are
-**not KPI authorization scopes**. It checks current professor access before asking
+The page accepts only `openid`, `email`, and `profile` identity scopes plus
+`offline_access` (ChatGPT requests it for refresh tokens); these are
+**not KPI authorization scopes**. Supabase issues 32-character alphanumeric
+authorization IDs, not UUIDs; only the OAuth client ID is a UUID. It checks current professor access before asking
 for authorization details and again before approval. Server-returned client, user,
 request ID and scopes are checked; query-supplied identity/permissions are ignored.
 Already-approved requests are not followed without verified client details; revoke
@@ -63,7 +65,7 @@ React rendering. Actual Google, Auth, Data API and ChatGPT E2E remain unexecuted
 
 Manual, using development only:
 
-- With readiness disabled, open `#/oauth/consent?authorization_id=<UUID>` → pilot
+- With readiness disabled, open `#/oauth/consent?authorization_id=<id>` → pilot
   unavailable; no consent SDK request or approval.
 - After backend issuance safeguards and controlled development deployment: start a fresh PKCE authorization from the
   registered client → Pages root/hash consent route, not a 404 or saved dashboard.

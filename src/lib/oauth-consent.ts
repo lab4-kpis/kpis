@@ -1,8 +1,14 @@
-const authorizationIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Supabase Auth issues 32-character alphanumeric authorization IDs; OAuth client IDs are UUIDs.
+const authorizationIdPattern = /^[A-Za-z0-9]{32}$/;
+const clientIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const developmentAuthUrl = "https://gapkrqfdshqbowdtldzc.supabase.co";
 
 export function validAuthorizationId(value: string | null): value is string {
   return value !== null && authorizationIdPattern.test(value);
+}
+
+export function validClientId(value: string | null): value is string {
+  return value !== null && clientIdPattern.test(value);
 }
 
 // Normalize alternate outer-query entries; the configured hash path keeps the ID inside the hash.
@@ -30,7 +36,7 @@ export function validateConsentDetails(
   if (!clientId || details.client.id !== clientId || details.authorization_id !== id || details.user.id !== userId) {
     throw new Error("La solicitud no corresponde al cliente o a la cuenta habilitada.");
   }
-  if (details.scope.split(/\s+/).filter(Boolean).some(scope => !["openid", "email", "profile"].includes(scope))) {
+  if (details.scope.split(/\s+/).filter(Boolean).some(scope => !["openid", "email", "profile", "offline_access"].includes(scope))) {
     throw new Error("La solicitud incluye permisos no habilitados para este piloto.");
   }
 }
@@ -65,7 +71,7 @@ export interface ConsentActions {
 }
 
 function requireCurrentRequest(request: ConsentRequest) {
-  if (!request.ready || !validAuthorizationId(request.id) || !validAuthorizationId(request.clientId) || !request.userId || !request.isCurrent()) {
+  if (!request.ready || !validAuthorizationId(request.id) || !validClientId(request.clientId) || !request.userId || !request.isCurrent()) {
     throw new Error("La solicitud ya no está activa o el piloto no está habilitado.");
   }
 }
