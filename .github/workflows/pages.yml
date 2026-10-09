@@ -36,11 +36,15 @@ jobs:
             base: /kpis/
             supabase_url: https://rzlalzowistpiphmdqpp.supabase.co
             publishable_key: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+            mcp_oauth_client_id: ""
+            mcp_oauth_pilot_ready: "false"
           - name: development
             ref: dev
             base: /kpis/dev/
             supabase_url: ${{ vars.DEV_VITE_SUPABASE_URL }}
             publishable_key: ${{ vars.DEV_VITE_SUPABASE_PUBLISHABLE_KEY }}
+            mcp_oauth_client_id: ${{ vars.DEV_VITE_MCP_OAUTH_CLIENT_ID }}
+            mcp_oauth_pilot_ready: ${{ vars.DEV_VITE_MCP_OAUTH_PILOT_READY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -61,6 +65,8 @@ jobs:
           VITE_BASE_PATH: ${{ matrix.base }}
           VITE_SUPABASE_URL: ${{ matrix.supabase_url }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ matrix.publishable_key }}
+          VITE_MCP_OAUTH_CLIENT_ID: ${{ matrix.mcp_oauth_client_id }}
+          VITE_MCP_OAUTH_PILOT_READY: ${{ matrix.mcp_oauth_pilot_ready }}
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:

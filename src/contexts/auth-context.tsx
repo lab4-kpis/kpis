@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import type { Session, User } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { consentLoginUrl } from "../lib/oauth-consent";
 import { publicConfig } from "../lib/env";
 import { getSupabase } from "../lib/supabase";
 
@@ -10,7 +11,7 @@ interface AuthState {
   user: User | null;
   authorized: boolean;
   authError: string | null;
-  signIn: () => Promise<void>;
+  signIn: (authorizationId?: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -53,14 +54,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       void verify(data.session);
     });
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      void verify(nextSession);
+      setTimeout(() => void verify(nextSession), 0);
     });
     return () => data.subscription.unsubscribe();
   }, [verify]);
 
-  const signIn = useCallback(async () => {
+  const signIn = useCallback(async (authorizationId?: string) => {
     setAuthError(null);
-    const redirectTo = new URL(import.meta.env.BASE_URL, window.location.origin).toString();
+    const redirectTo = authorizationId
+      ? consentLoginUrl(window.location.origin, import.meta.env.BASE_URL, authorizationId)
+      : new URL(import.meta.env.BASE_URL, window.location.origin).toString();
     const { error } = await getSupabase().auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo },

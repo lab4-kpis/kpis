@@ -31,7 +31,15 @@ project_id = "gapkrqfdshqbowdtldzc"
 
 [remotes.development.auth]
 site_url = "https://lab4-kpis.github.io/kpis/dev/"
-additional_redirect_urls = ["http://localhost:5173", "https://lab4-kpis.github.io/kpis/dev/"]
+additional_redirect_urls = ["http://localhost:5173", "https://lab4-kpis.github.io/kpis/dev/", "http://127.0.0.1:47819/callback"]
+
+# OAuth discovery is enabled for the development compatibility test only.
+# Pending deployment: the hash route serves the consent UI from the Pages root.
+# Do not push this path before deploying the UI; the live path is /oauth/consent.
+[remotes.development.auth.oauth_server]
+enabled = true
+authorization_url_path = "/#/oauth/consent"
+allow_dynamic_registration = false
 
 [remotes.production]
 project_id = "rzlalzowistpiphmdqpp"

@@ -1,5 +1,8 @@
-import type { KpisClient } from "./auth.ts";
-import { MAX_ROWS, TIMEZONE } from "./config.ts";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "../../src/types/database.ts";
+import { MAX_ROWS, TIMEZONE } from "./query-settings.ts";
+
+export type KpisClient = SupabaseClient<Database>;
 
 export type TeamRef = number | string;
 export type ReportingEnvironment = "dev" | "qa" | "prod";
