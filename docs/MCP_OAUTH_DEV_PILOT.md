@@ -143,25 +143,74 @@ the consent page from the local machine.
 - An unauthenticated tool call answering `503 "OAuth pilot is not ready."` proves
   the gate is closed: readiness is checked before the token.
 
-## Toward a simple professor connection
+## Simple professor connection (Dynamic Client Registration)
 
-Goal: a professor pastes one URL into ChatGPT, signs in with Google, and is done,
-with no client IDs, callbacks or owner Dashboard work per professor.
+Goal: a professor pastes one URL into ChatGPT, signs in with Google, and clicks
+**Autorizar**. No client IDs, callbacks, or per-professor Dashboard work.
 
-Today each professor would need: their connector's callback added to the static
-client by an owner, the client ID typed into ChatGPT's advanced OAuth settings,
-and a hosted consent page. Options to remove that friction, to evaluate before
-rollout:
+### How it works
 
-| Option | Removes | Cost / risk |
-|---|---|---|
-| Host consent on the published portal (`/#/oauth/consent`) | local preview, SiteURL swaps | needs a Pages flow that does not republish production unintentionally |
-| Dynamic Client Registration (ChatGPT auto-registers) | typing the client ID, per-callback registration | every registration is a new client; the hook's explicit `mcp_oauth_clients` mapping would need a safe rule (for example, trusted ChatGPT callback host) instead of per-ID rows |
-| Client ID Metadata Documents (CIMD) | static client and callback list | depends on Supabase Auth advertising support; not available today |
-| One workspace-published connector (if the ChatGPT plan allows admin-published apps) | per-professor connector creation and callback | needs plan/admin support; to verify |
+1. ChatGPT reads the MCP metadata, finds the Supabase authorization server and,
+   because DCR is enabled, **registers its own public PKCE client** with its
+   connector callback.
+2. The professor signs in with Google on the consent page hosted on Pages dev.
+3. Before showing (or letting Supabase auto-approve) the request, the page calls
+   `public.mcp_authorization_targets_mcp(authorization_id)`, which is true only when:
+   - the request is pending and not expired;
+   - it belongs to the current professor;
+   - it is for **exactly our MCP resource**;
+   - it comes from a trusted client.
+   The check runs again right before approval.
+4. The token hook adds the MCP audience only for trusted clients and active professors.
+   The Edge accepts any client ID; the audience is what binds the token.
 
-None of these has been implemented or verified. The professor-only hook,
-write denial and resource audience must stay in place regardless of the option.
+A trusted client (`private.mcp_trusted_client`) is either:
+- an active row in `private.mcp_oauth_clients` (a manual pilot client), or
+- a dynamic, public, `none`-auth client whose every callback is
+  `https://chatgpt.com/connector/oauth/<id>` or
+  `https://chatgpt.com/connector_platform_oauth_redirect`.
+
+An unknown callback format fails closed.
+
+**Why the resource check matters.** Anyone can create a ChatGPT connector whose
+own MCP server names our project as its authorization server. Without the check,
+a professor approving that connector would hand a read-only KPI token to a
+third-party server. Refresh tokens carry no resource, and Supabase deletes the
+authorization row after the code exchange. That is why the check lives in
+consent, not in the hook. Writes stay blocked for any OAuth token regardless.
+
+### Verified (2026-10-09, dev, rolled-back transaction)
+
+| Check | Result |
+|---|---|
+| Dynamic ChatGPT client trusted | ✅ |
+| Dynamic client with foreign or mixed callbacks, unmapped manual client, inactive mapping | ✅ not trusted |
+| RPC: our resource, pending, own or unclaimed request | ✅ true |
+| RPC: other resource, no resource, foreign client, other user, expired, unknown ID, called from an OAuth token, non-professor | ✅ false |
+| Hook: trusted client gets `["authenticated", <MCP resource>]` | ✅ |
+| Hook: foreign client / non-professor refused; portal tokens unchanged | ✅ |
+
+Not yet verified live: ChatGPT choosing DCR once `registration_endpoint` is advertised.
+
+### Owner activation (dev only, not done yet)
+
+1. Apply `202610090001_mcp_dynamic_chatgpt_clients.sql` to dev.
+2. Dashboard > Authentication > OAuth Server: enable **Dynamic client
+   registration**. Keep the Site URL (`https://lab4-kpis.github.io/kpis/dev/#/`) and
+   the authorization path (`/oauth/consent`) unchanged: the consent already lives on Pages dev.
+3. GitHub variables: `DEV_VITE_MCP_OAUTH_PILOT_READY=true`. Delete
+   `DEV_VITE_MCP_OAUTH_CLIENT_ID`, which is no longer read. Redeploy Pages dev.
+4. Edge: redeploy `lab4-kpis-mcp` and set `MCP_PILOT_READY=true`. Delete
+   `MCP_OAUTH_CLIENT_ID`, which is no longer read.
+5. Professor: ChatGPT → new connector → MCP URL
+   `https://gapkrqfdshqbowdtldzc.supabase.co/functions/v1/lab4-kpis-mcp` → OAuth
+   (automatic) → Google → **Autorizar**.
+
+Rollback: disable DCR and set `MCP_PILOT_READY=false`. Existing dynamic clients
+can be deleted from OAuth Apps.
+
+Later: Client ID Metadata Documents (CIMD) and RFC 9207 (stable callback) when
+Supabase Auth advertises them.
 
 ## Key Learnings:
 

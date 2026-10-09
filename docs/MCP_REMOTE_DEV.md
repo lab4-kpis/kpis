@@ -12,7 +12,7 @@ This is **closed scaffolding, not a usable ChatGPT integration**. Local stdio be
 
 ## Closed by default
 
-`MCP_PILOT_READY` must remain absent/false. `MCP_OAUTH_CLIENT_ID` must eventually be the registered public-client UUID; `MCP_PUBLISHABLE_KEY` must be the development publishable key. Missing/invalid values return HTTP 503 on tool calls. No secrets or runtime configuration have been deployed.
+`MCP_PILOT_READY` must remain absent/false. No client ID is pinned: ChatGPT registers its own client (DCR) and the access-token hook only adds the MCP audience for trusted clients (see `MCP_OAUTH_DEV_PILOT.md`). `MCP_PUBLISHABLE_KEY` must be the development publishable key. Missing/invalid values return HTTP 503 on tool calls. No secrets or runtime configuration have been deployed.
 
 **Controlled development validation, in this order (not a professor rollout):**
 
