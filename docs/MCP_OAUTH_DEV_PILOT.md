@@ -1,7 +1,9 @@
 # Development OAuth consent pilot
 
-This is delivery 1: a consent page, **not** a working remote MCP connection.
-Local stdio plugins are unchanged. No production configuration is required.
+Consent page and setup for the remote MCP pilot. A controlled development run
+on 2026-10-08 completed ChatGPT web → OAuth → consent → real KPI query; see
+[Development run](#development-run-2026-10-08). Local stdio plugins are unchanged.
+No production configuration is required.
 
 ## Configuration (owner setup)
 
@@ -61,7 +63,8 @@ rtk proxy ./node_modules/.bin/tsc -p tsconfig.app.json --noEmit --pretty false
 Automated coverage includes gate-off no calls, fresh professor checks, revoked
 access, server-returned fields, stale requests and auto-approved redirect refusal.
 It exercises the same injectable orchestration used by the page, not browser or
-React rendering. Actual Google, Auth, Data API and ChatGPT E2E remain unexecuted.
+React rendering. Hosted E2E status is recorded in
+[Development run](#development-run-2026-10-08).
 
 Manual, using development only:
 
@@ -77,6 +80,88 @@ Manual, using development only:
 - Reject → registered client receives denial. Approve → exact registered HTTPS
   callback receives code/state. Tokens, refresh and real KPI queries are delivery 2.
 - Normal portal login and existing local MCP login → unchanged.
+
+## Development run (2026-10-08)
+
+Development project only; production untouched. All temporary settings were
+restored afterwards (gate closed, client mapping inactive).
+
+### Result
+
+| Check | Result |
+|---|---|
+| ChatGPT web connect (User-Defined OAuth Client, public PKCE) | ✅ consent approved, session + refresh token issued |
+| Hook audience | ✅ `["authenticated", "<MCP resource>"]` |
+| Unknown client / portal tokens | ✅ refused / unchanged |
+| Data API reads as OAuth professor | ✅ |
+| Writes (`projects`, `measurement`) | ✅ denied `42501` |
+| Non-professor with the same client | ✅ 0 rows |
+| Real KPI query from ChatGPT through the Edge (gate open) | ✅ |
+| Refresh after access-token expiry | ⏳ pending |
+| Revoked professor from ChatGPT | ⏳ pending |
+| Two-user isolation from ChatGPT | ⏳ pending |
+
+Hook, read and write checks ran as SQL with the token's claims inside a
+rolled-back transaction. The real ChatGPT query proved PostgREST accepts the
+array audience.
+
+### Loopback consent runbook
+
+The Pages workflow republishes production and dev together, so the run served
+the consent page from the local machine.
+
+1. Map the client inactive:
+   `insert into private.mcp_oauth_clients (client_id, resource, active) values ('<client>', '<resource>', false)`.
+2. Dashboard > Auth > Hooks: add **Customize Access Token** → Postgres
+   `public.hook_mcp_access_token`. Keep the signup hook unchanged.
+3. Dashboard > Auth > URL Configuration: **Site URL** `http://localhost:5173/`
+   (its own field and Save button, not the Redirect URLs list); add redirect
+   `http://localhost:5173/**`. OAuth Server > Authorization path `/#/oauth/consent`.
+4. Create the git-ignored `.env.pilot.local` (`VITE_BASE_PATH=/`, dev URL,
+   publishable key, client ID, `VITE_MCP_OAUTH_PILOT_READY=true`), then
+   `vite build --mode pilot --outDir <tmp>` and
+   `vite preview --mode pilot --outDir <tmp> --port 5173 --strictPort`.
+5. Set the mapping `active=true`, connect from ChatGPT and approve.
+6. For a real query, set Edge secrets `MCP_OAUTH_CLIENT_ID`,
+   `MCP_PUBLISHABLE_KEY` and `MCP_PILOT_READY=true`.
+7. Restore: `MCP_PILOT_READY=false`, mapping `active=false`, the original Site
+   URL (`https://lab4-kpis.github.io/kpis/dev/#/`), authorization path
+   `/oauth/consent`, and remove the localhost redirects.
+
+### Gotchas found
+
+- **Copy the callback from the real authorize request** (`redirect_uri`), not from
+  a screenshot. A misread character and a truncated value caused
+  `400 invalid redirect_uri`.
+- **The callback is per ChatGPT connector.** Deleting and recreating the connector
+  produced a new callback that had to be registered again.
+- The authorize redirect is **Site URL + authorization path**. From outside,
+  `…/dev/#/` + `/oauth/consent` looks identical to `…/dev/` + `/#/oauth/consent`.
+- Authorization IDs are 32-character alphanumeric strings, and ChatGPT requests
+  `openid email offline_access`. Both made the first consent version reject
+  every request.
+- An unauthenticated tool call answering `503 "OAuth pilot is not ready."` proves
+  the gate is closed: readiness is checked before the token.
+
+## Toward a simple professor connection
+
+Goal: a professor pastes one URL into ChatGPT, signs in with Google, and is done,
+with no client IDs, callbacks or owner Dashboard work per professor.
+
+Today each professor would need: their connector's callback added to the static
+client by an owner, the client ID typed into ChatGPT's advanced OAuth settings,
+and a hosted consent page. Options to remove that friction, to evaluate before
+rollout:
+
+| Option | Removes | Cost / risk |
+|---|---|---|
+| Host consent on the published portal (`/#/oauth/consent`) | local preview, SiteURL swaps | needs a Pages flow that does not republish production unintentionally |
+| Dynamic Client Registration (ChatGPT auto-registers) | typing the client ID, per-callback registration | every registration is a new client; the hook's explicit `mcp_oauth_clients` mapping would need a safe rule (for example, trusted ChatGPT callback host) instead of per-ID rows |
+| Client ID Metadata Documents (CIMD) | static client and callback list | depends on Supabase Auth advertising support; not available today |
+| One workspace-published connector (if the ChatGPT plan allows admin-published apps) | per-professor connector creation and callback | needs plan/admin support; to verify |
+
+None of these has been implemented or verified. The professor-only hook,
+write denial and resource audience must stay in place regardless of the option.
 
 ## Key Learnings:
 
