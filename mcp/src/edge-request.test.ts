@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { canonicalEdgeRequest } from "./edge-request.ts";
 import { createRemoteHandler, DEV_ORIGIN, RESOURCE } from "./remote.ts";
 
-const handle = createRemoteHandler({ ready: false, clientId: "", publishableKey: "" });
+const handle = createRemoteHandler({ ready: false, publishableKey: "" });
 const edgeOrigin = DEV_ORIGIN.replace("https:", "http:");
 
 test("observed Edge URL becomes canonical public metadata without forwarded headers", async () => {

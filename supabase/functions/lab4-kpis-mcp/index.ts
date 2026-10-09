@@ -5,7 +5,6 @@ declare const Deno: { env: { get(name: string): string | undefined }; serve(hand
 
 const handler = createRemoteHandler({
   ready: Deno.env.get("MCP_PILOT_READY") === "true",
-  clientId: Deno.env.get("MCP_OAUTH_CLIENT_ID") ?? "",
   publishableKey: Deno.env.get("MCP_PUBLISHABLE_KEY") ?? "",
 });
 Deno.serve(async (request) => {

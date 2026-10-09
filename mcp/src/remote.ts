@@ -11,17 +11,20 @@ export const RESOURCE = `${DEV_ORIGIN}/functions/v1/lab4-kpis-mcp`;
 const ISSUER = `${DEV_ORIGIN}/auth/v1`;
 const METADATA = `${RESOURCE}/.well-known/oauth-protected-resource`;
 const schemes = [{ type: "oauth2", scopes: ["openid"] }];
-export type RemoteConfig = { ready: boolean; clientId: string; publishableKey: string };
+export type RemoteConfig = { ready: boolean; publishableKey: string };
 const identity = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // A public-key cache is safe to share; user clients, tokens and MCP sessions are not.
-export function tokenVerifier(clientId: string, keys: JWTVerifyGetKey = createRemoteJWKSet(new URL(`${ISSUER}/.well-known/jwks.json`))) {
+// Any ChatGPT client may register (DCR); the access-token hook only adds our
+// resource audience for trusted clients and active professors, so the audience
+// is the binding, not a fixed client ID.
+export function tokenVerifier(keys: JWTVerifyGetKey = createRemoteJWKSet(new URL(`${ISSUER}/.well-known/jwks.json`))) {
   return async (token: string) => {
     const { payload } = await jwtVerify(token, keys, {
       issuer: ISSUER, audience: RESOURCE, algorithms: ["ES256", "RS256"],
       requiredClaims: ["exp", "iat", "sub"],
     });
-    if (!identity.test(clientId) || payload.client_id !== clientId || !identity.test(payload.sub ?? "") ||
+    if (typeof payload.client_id !== "string" || !identity.test(payload.client_id) || !identity.test(payload.sub ?? "") ||
       payload.role !== "authenticated" || typeof payload.scope !== "string" ||
       !payload.scope.split(/\s+/).includes("openid") || typeof payload.iat !== "number" || payload.iat > Date.now() / 1000) {
       throw new Error("Invalid delegated identity.");
@@ -45,7 +48,7 @@ const toolError = (text: string, auth = false) => ({
 });
 
 export function createRemoteHandler(config: RemoteConfig, dependencies?: Dependencies) {
-  const deps = dependencies ?? { verify: tokenVerifier(config.clientId), client: userClient };
+  const deps = dependencies ?? { verify: tokenVerifier(), client: userClient };
   return async (request: Request): Promise<Response> => {
     const url = new URL(request.url);
     if (url.origin !== DEV_ORIGIN) return json({ error: "Invalid host." }, 403);
@@ -79,7 +82,7 @@ export function createRemoteHandler(config: RemoteConfig, dependencies?: Depende
     const method = body && typeof body === "object" && "method" in body ? body.method : undefined;
     let client: ReturnType<typeof userClient> | undefined;
     if (method === "tools/call") {
-      if (!config.ready || !identity.test(config.clientId) || !config.publishableKey.startsWith("sb_publishable_")) {
+      if (!config.ready || !config.publishableKey.startsWith("sb_publishable_")) {
         return json({ error: "OAuth pilot is not ready." }, 503);
       }
       const authorization = request.headers.get("authorization");

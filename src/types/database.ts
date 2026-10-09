@@ -193,6 +193,9 @@ isOneToOne: false
               "api_key": string,"key_prefix": string
             }[]
                            },
+"mcp_authorization_targets_mcp":
+{ Args: { "p_authorization_id": string }; Returns: boolean
+                           },
 "revoke_project_key":
 { Args: { "p_key_id": string }; Returns: undefined
                            }

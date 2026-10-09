@@ -10,9 +10,9 @@ const userA = "00000000-0000-4000-8000-000000000002";
 const userB = "00000000-0000-4000-8000-000000000003";
 const { privateKey, publicKey } = await generateKeyPair("ES256");
 const key = await exportJWK(publicKey);
-const verify = tokenVerifier(clientId, createLocalJWKSet({ keys: [{ ...key, kid: "test", alg: "ES256" }] }));
+const verify = tokenVerifier(createLocalJWKSet({ keys: [{ ...key, kid: "test", alg: "ES256" }] }));
 const read = async (response: Response) => JSON.parse(await response.text());
-const config = { ready: true, clientId, publishableKey: "sb_publishable_test" };
+const config = { ready: true, publishableKey: "sb_publishable_test" };
 async function signed(overrides: Record<string, unknown> = {}) {
   return new SignJWT({ iss: `${DEV_ORIGIN}/auth/v1`, aud: RESOURCE, sub: userA, client_id: clientId,
     role: "authenticated", scope: "openid", iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 300,
@@ -34,7 +34,9 @@ const clientFor = (enabled: boolean | (() => boolean) = true, calls: string[] = 
 
 test("JWT rejects wrong claims, expiry, future nbf and forged signatures", async () => {
   assert.equal(await verify(await signed()), userA);
-  for (const claims of [{ aud: "authenticated" }, { iss: "https://example.com" }, { client_id: userB },
+  // Dynamically registered clients differ per connector; the resource audience binds the token.
+  assert.equal(await verify(await signed({ client_id: userB })), userA);
+  for (const claims of [{ aud: "authenticated" }, { iss: "https://example.com" }, { client_id: "not-a-uuid" }, { client_id: 7 },
     { exp: 1 }, { exp: undefined }, { client_id: undefined }, { sub: undefined }, { scope: undefined }, { aud: undefined }, { exp: "invalid" }, { nbf: "invalid" }, { sub: "bad" }, { role: "service_role" }, { scope: "email" },
     { iat: undefined }, { iat: Date.now() / 1000 + 300 }, { nbf: Date.now() / 1000 + 300 }]) {
     await assert.rejects(verify(await signed(claims)));
@@ -104,7 +106,7 @@ test("JWT supports explicit resource audience arrays but rejects malformed/HS256
 });
 test("unconfigured identity/key never opens the protected surface", async () => {
   const deps = { verify: async () => { throw new Error("Must not verify"); }, client: clientFor() };
-  for (const settings of [{ clientId: "" }, { clientId: "not-a-uuid" }, { publishableKey: "service_role" }]) {
+  for (const settings of [{ ready: false }, { publishableKey: "" }, { publishableKey: "service_role" }]) {
     const response = await createRemoteHandler({ ...config, ...settings }, deps)(post("tools/call", "token"));
     assert.equal(response.status, 503);
   }

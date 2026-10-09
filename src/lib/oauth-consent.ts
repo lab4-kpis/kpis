@@ -1,6 +1,8 @@
 // Supabase Auth issues 32-character alphanumeric authorization IDs; OAuth client IDs are UUIDs.
 const authorizationIdPattern = /^[A-Za-z0-9]{32}$/;
 const clientIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// ChatGPT registers itself (DCR) with one of these callbacks; mirrors private.mcp_trusted_client.
+const chatgptCallbackPattern = /^https:\/\/chatgpt\.com\/(connector\/oauth\/[A-Za-z0-9_-]+|connector_platform_oauth_redirect)$/;
 export const developmentAuthUrl = "https://gapkrqfdshqbowdtldzc.supabase.co";
 
 export function validAuthorizationId(value: string | null): value is string {
@@ -30,11 +32,12 @@ export function consentLoginUrl(origin: string, base: string, id: string): strin
 }
 
 export function validateConsentDetails(
-  details: { authorization_id: string; client: { id: string }; user: { id: string }; scope: string },
-  id: string, userId: string, clientId: string,
+  details: { authorization_id: string; client: { id: string }; user: { id: string }; scope: string; redirect_uri: string },
+  id: string, userId: string,
 ): void {
-  if (!clientId || details.client.id !== clientId || details.authorization_id !== id || details.user.id !== userId) {
-    throw new Error("La solicitud no corresponde al cliente o a la cuenta habilitada.");
+  if (!validClientId(details.client.id) || !chatgptCallbackPattern.test(details.redirect_uri) ||
+    details.authorization_id !== id || details.user.id !== userId) {
+    throw new Error("La solicitud no corresponde a ChatGPT o a la cuenta habilitada.");
   }
   if (details.scope.split(/\s+/).filter(Boolean).some(scope => !["openid", "email", "profile", "offline_access"].includes(scope))) {
     throw new Error("La solicitud incluye permisos no habilitados para este piloto.");
@@ -61,37 +64,44 @@ export interface ConsentRequest {
   ready: boolean;
   id: string;
   userId: string;
-  clientId: string;
   isCurrent: () => boolean;
 }
 export interface ConsentActions {
   requireProfessor: () => Promise<void>;
+  // Server-side check that the pending request is for our MCP resource from a trusted client.
+  requireMcpResource: (id: string) => Promise<void>;
   getDetails: (id: string) => Promise<ConsentDetails | { redirect_url: string }>;
   decide: (id: string, approve: boolean) => Promise<string>;
 }
 
 function requireCurrentRequest(request: ConsentRequest) {
-  if (!request.ready || !validAuthorizationId(request.id) || !validClientId(request.clientId) || !request.userId || !request.isCurrent()) {
+  if (!request.ready || !validAuthorizationId(request.id) || !request.userId || !request.isCurrent()) {
     throw new Error("La solicitud ya no está activa o el piloto no está habilitado.");
   }
 }
 
 export async function loadConsent(request: ConsentRequest, actions: ConsentActions): Promise<ConsentDetails> {
   requireCurrentRequest(request);
-  // Existing grants can be auto-approved by getDetails; check professor first.
+  // Existing grants can be auto-approved by getDetails; check professor and resource first.
   await actions.requireProfessor();
+  requireCurrentRequest(request);
+  await actions.requireMcpResource(request.id);
   requireCurrentRequest(request);
   const details = await actions.getDetails(request.id);
   requireCurrentRequest(request);
   if (!("authorization_id" in details)) throw new Error("La solicitud ya fue procesada; revocá el permiso anterior e iniciá una nueva vinculación.");
-  validateConsentDetails(details, request.id, request.userId, request.clientId);
+  validateConsentDetails(details, request.id, request.userId);
   return details;
 }
 
 export async function decideConsent(request: ConsentRequest, details: ConsentDetails, approve: boolean, actions: ConsentActions): Promise<string> {
   requireCurrentRequest(request);
-  validateConsentDetails(details, request.id, request.userId, request.clientId);
-  if (approve) await actions.requireProfessor();
+  validateConsentDetails(details, request.id, request.userId);
+  if (approve) {
+    await actions.requireProfessor();
+    requireCurrentRequest(request);
+    await actions.requireMcpResource(request.id);
+  }
   requireCurrentRequest(request);
   const target = await actions.decide(request.id, approve);
   requireCurrentRequest(request);

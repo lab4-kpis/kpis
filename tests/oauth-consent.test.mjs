@@ -5,7 +5,8 @@ import { consentEntryUrl, consentLoginUrl, validAuthorizationId, validClientId, 
 // Supabase Auth issues 32-character alphanumeric authorization IDs, not UUIDs.
 const id = "aB3dE5gH7jK9mN1pQ3sT5vW7yZ9bC1dE";
 const client = "22222222-2222-4222-8222-222222222222";
-const details = { authorization_id: id, client: { id: client }, user: { id: "professor" }, scope: "openid email profile" };
+const callback = "https://chatgpt.com/connector/oauth/exact-id";
+const details = { authorization_id: id, client: { id: client }, user: { id: "professor" }, scope: "openid email profile", redirect_uri: callback };
 
 test("only Supabase-shaped authorization IDs are accepted", () => {
   assert.equal(validAuthorizationId(id), true);
@@ -33,17 +34,18 @@ test("Google continuation returns only to the in-app consent route", () => {
   assert.equal(consentLoginUrl("https://portal.test", "/kpis/dev/", id), `https://portal.test/kpis/dev/#/oauth/consent?authorization_id=${id}`);
   assert.throws(() => consentLoginUrl("https://portal.test", "/kpis/", "https://evil.test"));
 });
-test("verified request must match the authorization, current user and static client", () => {
-  validateConsentDetails(details, id, "professor", client);
+test("verified request must match the authorization, current user and a ChatGPT client", () => {
+  validateConsentDetails(details, id, "professor");
   // ChatGPT requests offline_access for refresh tokens; it grants no KPI permission.
-  validateConsentDetails({ ...details, scope: "openid email offline_access" }, id, "professor", client);
-  for (const args of [["bad", "professor", client], [id, "other", client], [id, "professor", ""], [id, "professor", "other"]]) {
-    assert.throws(() => validateConsentDetails(details, ...args));
+  validateConsentDetails({ ...details, scope: "openid email offline_access" }, id, "professor");
+  validateConsentDetails({ ...details, redirect_uri: "https://chatgpt.com/connector_platform_oauth_redirect" }, id, "professor");
+  for (const args of [["bad", "professor"], [id, "other"]]) assert.throws(() => validateConsentDetails(details, ...args));
+  for (const changed of [{ client: { id: "not-a-uuid" } }, { scope: "kpis.write" }, { redirect_uri: "https://evil.test/callback" },
+    { redirect_uri: "https://chatgpt.com.evil.test/connector/oauth/x" }, { redirect_uri: `${callback}/extra` }, { redirect_uri: "http://chatgpt.com/connector/oauth/x" }]) {
+    assert.throws(() => validateConsentDetails({ ...details, ...changed }, id, "professor"));
   }
-  assert.throws(() => validateConsentDetails({ ...details, scope: "kpis.write" }, id, "professor", client));
 });
 test("redirect is restricted to the server-verified registered HTTPS callback", () => {
-  const callback = "https://chatgpt.com/connector/oauth/exact-id";
   assert.equal(validateConsentRedirect(`${callback}?code=secret&state=state`, callback), `${callback}?code=secret&state=state`);
   for (const target of ["https://evil.test/callback", "https://chatgpt.com/connector/oauth/different-id", "https://user:password@chatgpt.com/connector/oauth/exact-id", "http://chatgpt.com/connector/oauth/exact-id", `${callback}/extra`, `${callback}#fragment`, "javascript:alert(1)"]) {
     assert.throws(() => validateConsentRedirect(target, callback));
@@ -51,14 +53,15 @@ test("redirect is restricted to the server-verified registered HTTPS callback", 
 });
 
 const { loadConsent, decideConsent } = await import("../src/lib/oauth-consent.ts");
-const request = { ready: true, id, userId: "professor", clientId: client, isCurrent: () => true };
-const consentDetails = { ...details, client: { id: client, name: "Pilot" }, redirect_uri: "https://chatgpt.com/connector/oauth/exact-id" };
+const request = { ready: true, id, userId: "professor", isCurrent: () => true };
+const consentDetails = { ...details, client: { id: client, name: "ChatGPT" } };
 function fakeActions(overrides = {}) {
   const calls = [];
   return {
     calls,
     actions: {
       requireProfessor: async () => { calls.push("professor"); },
+      requireMcpResource: async value => { calls.push(`resource:${value}`); },
       getDetails: async value => { calls.push(`details:${value}`); return consentDetails; },
       decide: async (value, approve) => { calls.push(`decide:${value}:${approve}`); return `${consentDetails.redirect_uri}?code=code`; },
       ...overrides,
@@ -71,11 +74,17 @@ test("disabled pilot makes no professor, details or decision calls", async () =>
   await assert.rejects(decideConsent({ ...request, ready: false }, consentDetails, true, actions));
   assert.deepEqual(calls, []);
 });
-test("fresh professor access is checked before details and checked again before approval", async () => {
+test("professor and MCP resource are checked before details and again before approval", async () => {
   const { actions, calls } = fakeActions();
   const loaded = await loadConsent(request, actions);
   await decideConsent(request, loaded, true, actions);
-  assert.deepEqual(calls, ["professor", `details:${id}`, "professor", `decide:${id}:true`]);
+  assert.deepEqual(calls, ["professor", `resource:${id}`, `details:${id}`, "professor", `resource:${id}`, `decide:${id}:true`]);
+});
+test("a request for another MCP server is never fetched (no auto-approval) nor approved", async () => {
+  const { actions, calls } = fakeActions({ requireMcpResource: async () => { throw new Error("other resource"); } });
+  await assert.rejects(loadConsent(request, actions));
+  await assert.rejects(decideConsent(request, consentDetails, true, actions));
+  assert.deepEqual(calls, ["professor", "professor"]);
 });
 test("revoked/non-professor cannot fetch details or approve", async () => {
   const { actions, calls } = fakeActions({ requireProfessor: async () => { throw new Error("revoked"); } });
@@ -85,7 +94,7 @@ test("revoked/non-professor cannot fetch details or approve", async () => {
 });
 test("server-returned client/request/user/scopes must be validated before use", async () => {
   for (const changed of [
-    { authorization_id: "bad" }, { client: { id: "other", name: "Fake" } },
+    { authorization_id: "bad" }, { client: { id: "other", name: "Fake" } }, { redirect_uri: "https://evil.test/callback" },
     { user: { id: "other" } }, { scope: "write" },
   ]) {
     const { actions } = fakeActions({ getDetails: async () => ({ ...consentDetails, ...changed }) });
@@ -95,7 +104,7 @@ test("server-returned client/request/user/scopes must be validated before use", 
 test("auto-approved redirect is not followed without verified client details", async () => {
   const { actions, calls } = fakeActions({ getDetails: async () => ({ redirect_url: "https://evil.test" }) });
   await assert.rejects(loadConsent(request, actions), /ya fue procesada/);
-  assert.deepEqual(calls, ["professor"]);
+  assert.deepEqual(calls, ["professor", `resource:${id}`]);
 });
 test("stale request invalidated during access check cannot fetch or approve another request", async () => {
   for (const operation of ["load", "approve"]) {
