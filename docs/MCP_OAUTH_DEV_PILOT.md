@@ -1,44 +1,104 @@
-# Development OAuth consent pilot
+# ChatGPT Web MCP: professor setup and DEV acceptance runbook
 
-Consent page and setup for the remote MCP pilot. A controlled development run
-on 2026-10-08 completed ChatGPT web → OAuth → consent → real KPI query; see
-[Development run](#development-run-2026-10-08). Local stdio plugins are unchanged.
-No production configuration is required.
+**Production status: not released.** On 2026-10-10, one controlled DEV account
+completed ChatGPT DCR/OAuth consent and received a real `daily_summary` result.
+The temporary tool gate was closed afterward; production was not changed. This
+guide separates the short professor setup from the one-time maintainer setup used
+to reproduce the flow. Local stdio plugins are unchanged.
 
-## Configuration (owner setup)
+## Quick setup for a professor (ChatGPT Web)
 
-1. Keep the development Supabase project `gapkrqfdshqbowdtldzc` and Site URL
-   `https://lab4-kpis.github.io/kpis/dev/`. The proposed authorization path is
-   `/#/oauth/consent`, which serves the existing Pages index and HashRouter route.
-   The repository change is pending: the live path still points to `/oauth/consent`.
-2. In **development** Dashboard > Authentication > OAuth Apps, register a public
-   static client (`token_endpoint_auth_method: none`) supporting authorization code
-   and refresh grants. Keep dynamic registration disabled. Copy the **exact**
-   callback shown by ChatGPT's connection configuration; do not guess a stable URL
-   (the development server does not currently advertise RFC 9207 issuer support).
-3. Set GitHub repository variable `DEV_VITE_MCP_OAUTH_CLIENT_ID` to that client
-   UUID; keep `DEV_VITE_MCP_OAUTH_PILOT_READY` absent or `false` for now. Pages maps
-   these to `VITE_MCP_OAUTH_CLIENT_ID` and `VITE_MCP_OAUTH_PILOT_READY` only for the
-   development matrix; production is explicitly empty/false. Local Vite uses the
-   unprefixed `VITE_*` names in its development environment.
-   The Google continuation URL is the portal base plus
-   `#/oauth/consent?authorization_id=<id>`. The existing base redirect entry is
-   sufficient in the reviewed upstream Auth implementation: matching Site URL
-   scheme/host/port is accepted, and allowlist matching strips the fragment.
-   Therefore no hash wildcard or redirect list change is necessary. Confirm the
-   hosted development flow preserves the fragment during the manual Google test.
-   Source: [pinned Auth redirect validation](https://github.com/supabase/auth/blob/ce9a8eee0cc042be8c7a42981a7ddae631e41d91/internal/utilities/request.go).
-   This is upstream-code evidence, not a completed hosted login. No allowlist
-   change has been pushed by this implementation.
-4. First implement/test delegated read-only backend restrictions and the
-   client-specific resource-audience issuance hook. Only once issuance cannot
-   grant writes, set `DEV_VITE_MCP_OAUTH_PILOT_READY=true` (or local `VITE_MCP_OAUTH_PILOT_READY=true`) for a controlled
-   development professor account to obtain and validate actual initial/refreshed
-   tokens. Keep the separate MCP tool gate `MCP_PILOT_READY` false until token
-   audience and Data API read/write-denial checks pass; only then temporarily
-   enable it for controlled ChatGPT E2E testing. No professor rollout before E2E
-   passes. The page also requires the exact development Supabase origin. Deployment
-   and live configuration updates require owner action; none are performed here.
+Use this only when the maintainer says the DEV pilot is ready. The server URL below
+is development; do not substitute it for a production URL or use it for routine
+work.
+
+1. In ChatGPT Web, open **Plugins** → **+** → **Add custom MCP server**.
+2. Give it a unique name (ChatGPT will not create another plugin with an existing
+   name). Set **Server URL** to:
+   `https://gapkrqfdshqbowdtldzc.supabase.co/functions/v1/lab4-kpis-mcp`
+3. Choose **OAuth**. Open **Advanced OAuth settings** and select **Dynamic Client
+   Registration (DCR)**. Keep the discovered OAuth endpoints and default scopes;
+   do not enter a client ID, client secret, callback URL, or registration URL by
+   hand. DCR registers and reuses a public client for this server connection.
+4. Accept the risk notice and choose **Create as a plugin**. Sign in with your own
+   enabled professor account and approve the consent request to finish linking.
+5. During the DEV pilot, wait until the maintainer confirms the one-query window is
+   open, then invoke `daily_summary` once. Each professor connects their own
+   account; never share an OAuth token or another professor's linked account.
+
+The connection is simpler than the old static-client pilot: no per-professor OAuth
+app, client ID, secret, or callback registration. It is still a per-professor
+custom-server install and sign-in. If the tool returns `503 OAuth pilot is not
+ready`, stop: the maintainer has intentionally left the data gate closed.
+
+## One-time maintainer setup (DEV only)
+
+This section is for reproducing the end-to-end test, not routine professor setup.
+Use only Supabase project `gapkrqfdshqbowdtldzc`.
+
+1. Check out `feat/mcp-dcr-simple-connect` (PR #18, stacked on PR #17) and review
+   the migration dry-run. Apply only
+   `202610090001_mcp_dynamic_chatgpt_clients.sql` to DEV, then deploy the
+   `lab4-kpis-mcp` Edge Function with platform JWT verification disabled (the
+   function validates OAuth tokens itself):
+
+   ```sh
+   supabase db push --dry-run --project-ref gapkrqfdshqbowdtldzc
+   supabase db push --project-ref gapkrqfdshqbowdtldzc
+   supabase functions deploy lab4-kpis-mcp --project-ref gapkrqfdshqbowdtldzc --no-verify-jwt --use-api
+   ```
+
+   Stop if the dry-run lists migrations beyond the expected DCR migration; resolve
+   that drift before applying anything.
+2. In the **DEV** Supabase Dashboard, enable **Authentication → OAuth Server →
+   Dynamic Client Registration**. Confirm the Custom Access Token hook is
+   `public.hook_mcp_access_token`; leave the signup hook alone. The DCR migration
+   restricts which public ChatGPT clients can receive this MCP's token audience.
+3. For this local-consent pilot only, temporarily route Supabase's OAuth return to
+   the local preview:
+   - **Authentication → URL Configuration → Site URL:** `http://localhost:5173/`
+   - Add Redirect URL: `http://localhost:5173/**`
+   - **Authentication → OAuth Server → Authorization path:** `/#/oauth/consent`
+4. Create ignored `.env.pilot.local` with the DEV project values below. Use the
+   publishable key from DEV; do not put a secret/service-role key in this file.
+   DCR does not need `VITE_MCP_OAUTH_CLIENT_ID`.
+
+   ```dotenv
+   VITE_BASE_PATH=/
+   VITE_SUPABASE_URL=https://gapkrqfdshqbowdtldzc.supabase.co
+   VITE_SUPABASE_PUBLISHABLE_KEY=<DEV publishable key>
+   VITE_MCP_OAUTH_PILOT_READY=true
+   ```
+
+   Build and serve the consent UI locally:
+
+   ```sh
+   ./node_modules/.bin/vite build --mode pilot --outDir /tmp/kpis-mcp-consent-preview
+   ./node_modules/.bin/vite preview --mode pilot --outDir /tmp/kpis-mcp-consent-preview --host 127.0.0.1 --port 5173 --strictPort
+   ```
+
+   Keep the preview running while ChatGPT opens consent. This loopback preview is
+   necessary because `.github/workflows/pages.yml` currently publishes DEV and
+   production together; do not trigger that Pages workflow just to test consent.
+5. Confirm the Edge secrets `MCP_PUBLISHABLE_KEY` and `MCP_PILOT_READY` are set on
+   DEV, with `MCP_PILOT_READY=false`. This is the data-access gate, separate from
+   the frontend consent flag. Keep it closed while connecting ChatGPT.
+6. In ChatGPT Web, follow **Quick setup for a professor**. Use a fresh unique
+   plugin name, OAuth → DCR, and the DEV URL. Sign in with an enabled professor
+   account and approve consent. Confirm the connector is linked before proceeding;
+   no KPI data call is needed to finish OAuth linking.
+7. Only when ready for the one controlled read-only query, temporarily set the DEV
+   Edge secret `MCP_PILOT_READY=true`. Invoke `daily_summary` once and record only
+   the status and aggregate result needed for acceptance. Immediately set
+   `MCP_PILOT_READY=false` again, then verify an anonymous `tools/call` returns
+   `503`. Stop Vite preview and restore the DEV Auth settings:
+   - Site URL: `https://lab4-kpis.github.io/kpis/dev/#/`
+   - Authorization path: `/oauth/consent`
+   - Remove the `http://localhost:5173/**` redirect
+
+Keep DCR enabled in DEV after the test if the pilot will continue. Disable it only
+when deliberately rolling back DCR; any temporary readiness gate and localhost
+URLs must still be restored immediately.
 
 The page accepts only `openid`, `email`, and `profile` identity scopes plus
 `offline_access` (ChatGPT requests it for refresh tokens); these are
@@ -56,32 +116,39 @@ boundary.
 Automated (no build):
 
 ```sh
-rtk proxy node --test tests/oauth-consent.test.mjs
-rtk proxy ./node_modules/.bin/tsc -p tsconfig.app.json --noEmit --pretty false
+node --test tests/oauth-consent.test.mjs
+./node_modules/.bin/tsc -p tsconfig.app.json --noEmit --pretty false
 ```
 
 Automated coverage includes gate-off no calls, fresh professor checks, revoked
 access, server-returned fields, stale requests and auto-approved redirect refusal.
 It exercises the same injectable orchestration used by the page, not browser or
-React rendering. Hosted E2E status is recorded in
-[Development run](#development-run-2026-10-08).
+React rendering. The hosted DCR run is recorded in
+[Verified DCR run](#verified-dcr-run-2026-10-10).
 
 Manual, using development only:
 
 - With readiness disabled, open `#/oauth/consent?authorization_id=<id>` → pilot
   unavailable; no consent SDK request or approval.
-- After backend issuance safeguards and controlled development deployment: start a fresh PKCE authorization from the
-  registered client → Pages root/hash consent route, not a 404 or saved dashboard.
+- Create a fresh ChatGPT Web custom MCP server using **OAuth → DCR**; the
+  connection should register a public client without a manually entered ID.
+- Start consent → local loopback page loads at `http://localhost:5173/#/oauth/consent`,
+  not a 404 or the portal dashboard.
 - Sign in with Google → return to the **same** request; no arbitrary return URL.
 - Enabled professor → server-verified client name and identity scopes; explicit
   approve/reject. Missing, expired, duplicated, mismatched requests → blocked.
 - Non-professor or disabled professor → blocked; revoke professor access after
   opening consent, then approve → blocked by a fresh backend check.
-- Reject → registered client receives denial. Approve → exact registered HTTPS
-  callback receives code/state. Tokens, refresh and real KPI queries are delivery 2.
+- Reject → ChatGPT receives denial. Approve → ChatGPT finishes OAuth and links the
+  connector. An enabled professor can then run `daily_summary` when the separate
+  Edge data gate is temporarily open.
 - Normal portal login and existing local MCP login → unchanged.
 
-## Development run (2026-10-08)
+## Historical static-client pilot (2026-10-08)
+
+This earlier run used a manually registered OAuth client. It proved the backend's
+delegated read-only policies, but it is **not** the current teacher setup; use DCR
+above to avoid copying per-connector credentials and callbacks.
 
 Development project only; production untouched. All temporary settings were
 restored afterwards (gate closed, client mapping inactive).
@@ -105,7 +172,7 @@ Hook, read and write checks ran as SQL with the token's claims inside a
 rolled-back transaction. The real ChatGPT query proved PostgREST accepts the
 array audience.
 
-### Loopback consent runbook
+### Historical static-client loopback notes
 
 The Pages workflow republishes production and dev together, so the run served
 the consent page from the local machine.
@@ -118,7 +185,7 @@ the consent page from the local machine.
    (its own field and Save button, not the Redirect URLs list); add redirect
    `http://localhost:5173/**`. OAuth Server > Authorization path `/#/oauth/consent`.
 4. Create the git-ignored `.env.pilot.local` (`VITE_BASE_PATH=/`, dev URL,
-   publishable key, client ID, `VITE_MCP_OAUTH_PILOT_READY=true`), then
+   publishable key, static client ID, `VITE_MCP_OAUTH_PILOT_READY=true`), then
    `vite build --mode pilot --outDir <tmp>` and
    `vite preview --mode pilot --outDir <tmp> --port 5173 --strictPort`.
 5. Set the mapping `active=true`, connect from ChatGPT and approve.
@@ -143,17 +210,20 @@ the consent page from the local machine.
 - An unauthenticated tool call answering `503 "OAuth pilot is not ready."` proves
   the gate is closed: readiness is checked before the token.
 
-## Simple professor connection (Dynamic Client Registration)
+## DCR connection and authorization model
 
-Goal: a professor pastes one URL into ChatGPT, signs in with Google, and clicks
-**Autorizar**. No client IDs, callbacks, or per-professor Dashboard work.
+The professor adds one custom MCP server in ChatGPT, chooses OAuth → DCR, then
+signs in with their own account and approves consent. No client ID, secret,
+callback copying, or per-professor Dashboard work is required. See the
+[quick setup](#quick-setup-for-a-professor-chatgpt-web).
 
 ### How it works
 
 1. ChatGPT reads the MCP metadata, finds the Supabase authorization server and,
    because DCR is enabled, **registers its own public PKCE client** with its
    connector callback.
-2. The professor signs in with Google on the consent page hosted on Pages dev.
+2. During the recorded DEV test, the consent page was served from the local
+   loopback preview because the Pages workflow also republishes production.
 3. Before showing (or letting Supabase auto-approve) the request, the page calls
    `public.mcp_authorization_targets_mcp(authorization_id)`, which is true only when:
    - the request is pending and not expired;
@@ -179,7 +249,7 @@ third-party server. Refresh tokens carry no resource, and Supabase deletes the
 authorization row after the code exchange. That is why the check lives in
 consent, not in the hook. Writes stay blocked for any OAuth token regardless.
 
-### Verified (2026-10-09, dev, rolled-back transaction)
+### Verified DCR checks (2026-10-09, dev, rolled-back transaction)
 
 | Check | Result |
 |---|---|
@@ -190,24 +260,36 @@ consent, not in the hook. Writes stay blocked for any OAuth token regardless.
 | Hook: trusted client gets `["authenticated", <MCP resource>]` | ✅ |
 | Hook: foreign client / non-professor refused; portal tokens unchanged | ✅ |
 
-Not yet verified live: ChatGPT choosing DCR once `registration_endpoint` is advertised.
+## Verified DCR run (2026-10-10, DEV)
 
-### Owner activation (dev only, not done yet)
+| Check | Result |
+|---|---|
+| ChatGPT custom server with OAuth → DCR; unique plugin name | ✅ linked using the professor's own account |
+| Authorization and real `daily_summary` call | ✅ returned the aggregate summary for 16 teams |
+| Pilot gate after query | ✅ restored to `MCP_PILOT_READY=false`; anonymous call returns 503 |
+| Production | ✅ untouched |
+| Populated KPI accuracy | ⏳ not proven: this DEV snapshot reported 16 teams with no KPIs loaded |
+| Access-token refresh/expiry, professor revocation, two-professor isolation | ⏳ pending |
 
-1. Apply `202610090001_mcp_dynamic_chatgpt_clients.sql` to dev.
-2. Dashboard > Authentication > OAuth Server: enable **Dynamic client
-   registration**. Keep the Site URL (`https://lab4-kpis.github.io/kpis/dev/#/`) and
-   the authorization path (`/oauth/consent`) unchanged: the consent already lives on Pages dev.
-3. GitHub variables: `DEV_VITE_MCP_OAUTH_PILOT_READY=true`. Delete
-   `DEV_VITE_MCP_OAUTH_CLIENT_ID`, which is no longer read. Redeploy Pages dev.
-4. Edge: redeploy `lab4-kpis-mcp` and set `MCP_PILOT_READY=true`. Delete
-   `MCP_OAUTH_CLIENT_ID`, which is no longer read.
-5. Professor: ChatGPT → new connector → MCP URL
-   `https://gapkrqfdshqbowdtldzc.supabase.co/functions/v1/lab4-kpis-mcp` → OAuth
-   (automatic) → Google → **Autorizar**.
+The ChatGPT UI presented a generic internal-plugin error while the Edge gate was
+closed; the actual HTTP response was `503 OAuth pilot is not ready`. After the
+owner temporarily opened the DEV gate, the same linked connector returned the
+summary. Close the gate immediately after a controlled query.
 
-Rollback: disable DCR and set `MCP_PILOT_READY=false`. Existing dynamic clients
-can be deleted from OAuth Apps.
+## Not production-ready yet
+
+- Complete refresh/expiry, disabled/revoked-professor, and two-professor isolation
+  acceptance in DEV; validate with a populated DEV KPI sample.
+- Review and merge PR #17, then stacked PR #18. Both remain drafts until the
+  acceptance checklist is complete.
+- Prepare production Supabase settings, migration, Edge secrets/function, DCR, and
+  a stable HTTPS consent route. Never reuse localhost URLs or DEV credentials.
+- Separate the Pages DEV and production deploys, or explicitly coordinate a single
+  release: `.github/workflows/pages.yml` currently builds and publishes both for
+  pushes to either `main` or `dev`.
+- Keep the production tool gate closed until the production OAuth flow and access
+  policies pass the same checks. Do not roll out the professor instructions before
+  the owner announces the production URL is ready.
 
 Later: Client ID Metadata Documents (CIMD) and RFC 9207 (stable callback) when
 Supabase Auth advertises them.
