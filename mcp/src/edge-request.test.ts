@@ -33,6 +33,15 @@ test("wrong project, origin and prefix cannot be repaired by forwarded headers",
   ]) assert.equal(canonicalEdgeRequest(new Request(url, { headers: { "x-forwarded-host": new URL(DEV_ORIGIN).host } }), project), null);
 });
 
+test("same Edge adapter derives the public resource boundary for another Supabase project", async () => {
+  const project = "https://production-project.supabase.co";
+  const request = canonicalEdgeRequest(new Request("http://production-project.supabase.co/lab4-kpis-mcp/.well-known/oauth-protected-resource"), project);
+  assert.ok(request);
+  assert.equal(request.url, `${project}/functions/v1/lab4-kpis-mcp/.well-known/oauth-protected-resource`);
+  assert.equal(canonicalEdgeRequest(new Request("http://evil.supabase.co/lab4-kpis-mcp"), project), null);
+  assert.equal(canonicalEdgeRequest(new Request("http://production-project.supabase.co/lab4-kpis-mcp"), "http://production-project.supabase.co"), null);
+});
+
 test("caller Origin and query restrictions remain enforced after Edge adaptation", async () => {
   const origin = canonicalEdgeRequest(new Request(`${edgeOrigin}/lab4-kpis-mcp`, { headers: { origin: "https://evil.example" } }), DEV_ORIGIN);
   const query = canonicalEdgeRequest(new Request(`${edgeOrigin}/lab4-kpis-mcp?unexpected=true`), DEV_ORIGIN);

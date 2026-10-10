@@ -6,6 +6,9 @@ The temporary tool gate was closed afterward; production was not changed. This
 guide separates the short professor setup from the one-time maintainer setup used
 to reproduce the flow. Local stdio plugins are unchanged.
 
+For end-user instructions, see [Conectar el MCP desde ChatGPT Web](MCP_PROFESORES.md).
+For environment operations, see [Configurar el MCP en Supabase](MCP_SUPABASE_SETUP.md).
+
 ## Quick setup for a professor (ChatGPT Web)
 
 Use this only when the maintainer says the DEV pilot is ready. The server URL below

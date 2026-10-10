@@ -10,7 +10,7 @@ const userA = "00000000-0000-4000-8000-000000000002";
 const userB = "00000000-0000-4000-8000-000000000003";
 const { privateKey, publicKey } = await generateKeyPair("ES256");
 const key = await exportJWK(publicKey);
-const verify = tokenVerifier(createLocalJWKSet({ keys: [{ ...key, kid: "test", alg: "ES256" }] }));
+const verify = tokenVerifier(DEV_ORIGIN, createLocalJWKSet({ keys: [{ ...key, kid: "test", alg: "ES256" }] }));
 const read = async (response: Response) => JSON.parse(await response.text());
 const config = { ready: true, publishableKey: "sb_publishable_test" };
 async function signed(overrides: Record<string, unknown> = {}) {
@@ -88,13 +88,35 @@ test("disabled professors get a tool challenge and no KPI read", async () => {
   assert.match(result._meta["mcp/www_authenticate"][0], /error_description=/);
   assert.equal(calls.length, 1);
 });
-test("origin, host, malformed and oversized bodies fail closed", async () => {
+test("ChatGPT and Claude origins are allowed while arbitrary origins, hosts and malformed bodies fail closed", async () => {
   const handle = createRemoteHandler(config);
   assert.equal((await handle(new Request("https://example.com/"))).status, 403);
   assert.equal((await handle(new Request(RESOURCE, { headers: { Origin: "https://example.com" } }))).status, 403);
+  for (const origin of ["https://chatgpt.com", "https://claude.ai"]) {
+    const request = post("initialize");
+    request.headers.set("Origin", origin);
+    assert.notEqual((await handle(request)).status, 403);
+  }
   assert.equal((await handle(new Request(RESOURCE, { method: "POST", body: "{" }))).status, 400);
   assert.equal((await handle(new Request(RESOURCE, { method: "POST", body: "x".repeat(16385) }))).status, 413);
   assert.equal((await handle(new Request(`${RESOURCE}?token=secret`))).status, 404);
+});
+
+test("project URL determines issuer, resource and JWT trust boundary", async () => {
+  const projectUrl = "https://prodproject.supabase.co";
+  const resource = `${projectUrl}/functions/v1/lab4-kpis-mcp`;
+  const { privateKey: projectPrivateKey, publicKey: projectPublicKey } = await generateKeyPair("ES256");
+  const projectVerify = tokenVerifier(projectUrl, createLocalJWKSet({ keys: [{ ...(await exportJWK(projectPublicKey)), kid: "project", alg: "ES256" }] }));
+  const sign = (issuer: string, audience: string) => new SignJWT({ iss: issuer, aud: audience, sub: userA, client_id: clientId,
+    role: "authenticated", scope: "openid", iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 300 })
+    .setProtectedHeader({ alg: "ES256", kid: "project" }).sign(projectPrivateKey);
+  const handle = createRemoteHandler({ ...config, projectUrl }, { verify: projectVerify, client: clientFor() });
+  const meta = await handle(new Request(`${resource}/.well-known/oauth-protected-resource`));
+  assert.deepEqual(await meta.json(), { resource, authorization_servers: [`${projectUrl}/auth/v1`], scopes_supported: ["openid"], bearer_methods_supported: ["header"], resource_name: "Lab4 KPIs" });
+  assert.equal(await projectVerify(await sign(`${projectUrl}/auth/v1`, resource)), userA);
+  await assert.rejects(projectVerify(await sign(`${DEV_ORIGIN}/auth/v1`, resource)));
+  await assert.rejects(projectVerify(await sign(`${projectUrl}/auth/v1`, RESOURCE)));
+  assert.equal((await handle(new Request(`${DEV_ORIGIN}/functions/v1/lab4-kpis-mcp`))).status, 403);
 });
 
 test("JWT supports explicit resource audience arrays but rejects malformed/HS256 tokens", async () => {

@@ -6,6 +6,7 @@ declare const Deno: { env: { get(name: string): string | undefined }; serve(hand
 const handler = createRemoteHandler({
   ready: Deno.env.get("MCP_PILOT_READY") === "true",
   publishableKey: Deno.env.get("MCP_PUBLISHABLE_KEY") ?? "",
+  projectUrl: Deno.env.get("SUPABASE_URL") ?? "",
 });
 Deno.serve(async (request) => {
   const canonical = canonicalEdgeRequest(request, Deno.env.get("SUPABASE_URL") ?? "");

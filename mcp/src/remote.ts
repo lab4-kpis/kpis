@@ -8,20 +8,25 @@ import { dailySummary, todayInBuenosAires } from "./queries.ts";
 
 export const DEV_ORIGIN = "https://gapkrqfdshqbowdtldzc.supabase.co";
 export const RESOURCE = `${DEV_ORIGIN}/functions/v1/lab4-kpis-mcp`;
-const ISSUER = `${DEV_ORIGIN}/auth/v1`;
-const METADATA = `${RESOURCE}/.well-known/oauth-protected-resource`;
 const schemes = [{ type: "oauth2", scopes: ["openid"] }];
-export type RemoteConfig = { ready: boolean; publishableKey: string };
+const ALLOWED_CLIENT_ORIGINS = new Set(["https://chatgpt.com", "https://claude.ai"]);
+export const resourceFor = (projectUrl: string) => `${projectUrl.replace(/\/+$/, "")}/functions/v1/lab4-kpis-mcp`;
+const issuerFor = (projectUrl: string) => `${projectUrl.replace(/\/+$/, "")}/auth/v1`;
+const validProjectUrl = (value: string) => {
+  try { const url = new URL(value); return url.protocol === "https:" && /^[a-z0-9-]+\.supabase\.co$/.test(url.hostname) && !url.port && url.pathname === "/" && !url.search && !url.hash; }
+  catch { return false; }
+};
+export type RemoteConfig = { ready: boolean; publishableKey: string; projectUrl?: string };
 const identity = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // A public-key cache is safe to share; user clients, tokens and MCP sessions are not.
-// Any ChatGPT client may register (DCR); the access-token hook only adds our
+// ChatGPT and Claude may register (DCR); the access-token hook only adds our
 // resource audience for trusted clients and active professors, so the audience
 // is the binding, not a fixed client ID.
-export function tokenVerifier(keys: JWTVerifyGetKey = createRemoteJWKSet(new URL(`${ISSUER}/.well-known/jwks.json`))) {
+export function tokenVerifier(projectUrl = DEV_ORIGIN, keys: JWTVerifyGetKey = createRemoteJWKSet(new URL(`${issuerFor(projectUrl)}/.well-known/jwks.json`))) {
   return async (token: string) => {
     const { payload } = await jwtVerify(token, keys, {
-      issuer: ISSUER, audience: RESOURCE, algorithms: ["ES256", "RS256"],
+      issuer: issuerFor(projectUrl), audience: resourceFor(projectUrl), algorithms: ["ES256", "RS256"],
       requiredClaims: ["exp", "iat", "sub"],
     });
     if (typeof payload.client_id !== "string" || !identity.test(payload.client_id) || !identity.test(payload.sub ?? "") ||
@@ -33,32 +38,36 @@ export function tokenVerifier(keys: JWTVerifyGetKey = createRemoteJWKSet(new URL
   };
 }
 
-const userClient = (token: string, key: string) => createClient<Database>(DEV_ORIGIN, key, {
+const userClient = (projectUrl: string, token: string, key: string) => createClient<Database>(projectUrl, key, {
   auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   global: { headers: { Authorization: `Bearer ${token}` } },
 });
-type Dependencies = { verify: (token: string) => Promise<string>; client: typeof userClient };
+type Dependencies = { verify: (token: string) => Promise<string>; client: (token: string, key: string) => ReturnType<typeof userClient> };
 const json = (body: unknown, status = 200, headers: Record<string, string> = {}) => new Response(JSON.stringify(body), {
   status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers },
 });
-const challenge = (error?: string) => `Bearer resource_metadata="${METADATA}"${error ? `, error="${error}", error_description="A valid enabled professor grant is required."` : ""}`;
-const toolError = (text: string, auth = false) => ({
-  isError: true, content: [{ type: "text" as const, text }],
-  ...(auth && { _meta: { "mcp/www_authenticate": [challenge("insufficient_scope")] } }),
-});
-
 export function createRemoteHandler(config: RemoteConfig, dependencies?: Dependencies) {
-  const deps = dependencies ?? { verify: tokenVerifier(), client: userClient };
+  const projectUrl = (config.projectUrl ?? DEV_ORIGIN).replace(/\/+$/, "");
+  const resource = resourceFor(projectUrl);
+  const issuer = issuerFor(projectUrl);
+  const metadata = `${resource}/.well-known/oauth-protected-resource`;
+  const deps = dependencies ?? { verify: tokenVerifier(projectUrl), client: (token: string, key: string) => userClient(projectUrl, token, key) };
+  const challenge = (error?: string) => `Bearer resource_metadata="${metadata}"${error ? `, error="${error}", error_description="A valid enabled professor grant is required."` : ""}`;
+  const toolError = (text: string, auth = false) => ({
+    isError: true, content: [{ type: "text" as const, text }],
+    ...(auth && { _meta: { "mcp/www_authenticate": [challenge("insufficient_scope")] } }),
+  });
+  if (!validProjectUrl(projectUrl)) throw new Error("MCP project URL must be an HTTPS Supabase project URL.");
   return async (request: Request): Promise<Response> => {
     const url = new URL(request.url);
-    if (url.origin !== DEV_ORIGIN) return json({ error: "Invalid host." }, 403);
+    if (url.origin !== projectUrl) return json({ error: "Invalid host." }, 403);
     const origin = request.headers.get("origin");
-    if (origin && origin !== "https://chatgpt.com") return json({ error: "Invalid origin." }, 403);
-    if (request.method === "GET" && url.href === METADATA) return json({
-      resource: RESOURCE, authorization_servers: [ISSUER], scopes_supported: ["openid"],
-      bearer_methods_supported: ["header"], resource_name: "Lab4 KPIs (development)",
+    if (origin && !ALLOWED_CLIENT_ORIGINS.has(origin)) return json({ error: "Invalid origin." }, 403);
+    if (request.method === "GET" && url.href === metadata) return json({
+      resource, authorization_servers: [issuer], scopes_supported: ["openid"],
+      bearer_methods_supported: ["header"], resource_name: "Lab4 KPIs",
     });
-    if (url.pathname !== new URL(RESOURCE).pathname || url.search) return json({ error: "Not found." }, 404);
+    if (url.pathname !== new URL(resource).pathname || url.search) return json({ error: "Not found." }, 404);
     if (request.method !== "POST") return json({ error: "Method not allowed." }, 405, { Allow: "POST" });
     // Bound the body before parsing to distinguish protected calls from public discovery.
     const reader = request.body?.getReader();
@@ -97,9 +106,9 @@ export function createRemoteHandler(config: RemoteConfig, dependencies?: Depende
       }
       client = deps.client(token, config.publishableKey);
     }
-    const server = new Server({ name: "lab4-kpis-dev", version: "0.1.0" }, { capabilities: { tools: {} } });
+    const server = new Server({ name: "lab4-kpis", version: "0.1.0" }, { capabilities: { tools: {} } });
     server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: [{
-      name: "daily_summary", description: "Read daily team KPI compliance for enabled professors; development only.",
+      name: "daily_summary", description: "Read daily team KPI compliance for enabled professors.",
       inputSchema: { type: "object", properties: { date: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" } }, additionalProperties: false },
       annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
       securitySchemes: schemes, _meta: { securitySchemes: schemes },
