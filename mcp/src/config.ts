@@ -16,10 +16,9 @@ const bundledConnections: Partial<Record<EnvironmentName, Connection>> =
   typeof __LAB4_KPIS_CONNECTIONS__ === "undefined" ? {} : __LAB4_KPIS_CONNECTIONS__;
 
 export const VERSION = typeof __LAB4_KPIS_VERSION__ === "undefined" ? "0.0.0-dev" : __LAB4_KPIS_VERSION__;
-export const TIMEZONE = "America/Argentina/Buenos_Aires";
+export { TIMEZONE, MAX_ROWS } from "./query-settings.ts";
 export const CALLBACK_HOST = "127.0.0.1";
 export const DEFAULT_CALLBACK_PORT = 47819;
-export const MAX_ROWS = 500;
 
 export type Settings = {
   environment: EnvironmentName;

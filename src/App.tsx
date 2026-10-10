@@ -5,6 +5,7 @@ import { LoadingState } from "./components/ui/feedback";
 import { useAuth } from "./contexts/auth-context";
 import { publicConfig } from "./lib/env";
 import { DashboardPage } from "./pages/dashboard-page";
+import { OAuthConsentPage } from "./pages/oauth-consent-page";
 import { LoginPage } from "./pages/login-page";
 import { PublicCompliancePage } from "./pages/public-compliance-page";
 import { TeamPage } from "./pages/team-page";
@@ -26,6 +27,7 @@ export function App() {
   return (
     <Routes>
       <Route path="/docs" element={<Suspense fallback={<LoadingState label="Cargando documentación" />}><SwaggerPage /></Suspense>} />
+      <Route path="/oauth/consent" element={<OAuthConsentPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/cumplimiento" element={<PublicCompliancePage />} />
       <Route path="/mi-equipo" element={<TeamPage />} />
